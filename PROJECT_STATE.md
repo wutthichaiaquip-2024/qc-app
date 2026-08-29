@@ -31,7 +31,7 @@ Blocked / needs your action:
 - **Vercel deployment** — not connected yet (needs your Vercel account).
 - Barcode symbology/payload standard (Code128 vs QR, payload structure) — not decided yet, needed before Phase 2 schema is finalized.
 
-## Phase 1 — User & Permission: สถานะ **บางส่วน**
+## Phase 1 — User & Permission: สถานะ **เสร็จ**
 
 Done:
 - Migration `supabase/migrations/0002_users_permissions.sql`: `app_role` enum (7 roles), `sites` (minimal, expands in Phase 2), `user_profiles`, `user_sites` (multi-site mapping), `role_permissions` (View/Create/Edit/Approve/Reject/Delete × 18 modules — seeded ADMIN=full access, everyone else=view-only as a **safe starting default, not a finished business decision**), `audit_log` + generic `audit_trigger_fn()` wired onto all 4 new tables, RLS enabled + policies on all of them.
@@ -41,11 +41,13 @@ Done:
 - UI: `/login` (email+password sign-in), route-group shell `src/app/(app)/layout.tsx` redirects unauthenticated users to `/login` (via `src/proxy.ts`, Next.js 16's replacement for `middleware.ts`), `Header` shows real signed-in user + role, `/settings/users` lets ADMIN view all users and change role/status (RLS-enforced; non-admins see read-only).
 - Verified in browser: unauthenticated visit to `/` correctly redirects to `/login`.
 - ⚠️ Incident during this phase: `supabase config push` initially overwrote unrelated auth security settings on the live project (disabled email confirmation, disabled MFA, weakened rate limits) as a side effect of enabling the JWT hook — caught and reverted immediately, confirmed `up to date` against prior values. Lesson: always diff `config push` output before trusting it; don't push config changes without reviewing every line of the diff.
-- ⚠️ Bug found when you tried creating the first user via Supabase Studio: `handle_new_auth_user()` from `0003_bootstrap_first_admin.sql` had `case when v_is_first then 'ADMIN' else null end` — Postgres resolves that CASE to type `text` (not `app_role`), so every single user creation failed with "Database error creating new user" (root cause: `column "role" is of type app_role but expression is of type text"`). Fixed in `supabase/migrations/0004_fix_bootstrap_role_cast.sql` (explicit `::app_role` cast), verified by reproducing the exact insert pattern before and after the fix. Confirmed the failed attempt left no orphaned `auth.users` row (transaction rolled back cleanly) — safe to retry user creation now.
+- ⚠️ Bug found when you tried creating the first user via Supabase Studio: `handle_new_auth_user()` from `0003_bootstrap_first_admin.sql` had `case when v_is_first then 'ADMIN' else null end` — Postgres resolves that CASE to type `text` (not `app_role`), so every single user creation failed with "Database error creating new user" (root cause: `column "role" is of type app_role but expression is of type text"`). Fixed in `supabase/migrations/0004_fix_bootstrap_role_cast.sql` (explicit `::app_role` cast), verified by reproducing the exact insert pattern before and after the fix.
+- ⚠️ Second bug found on first login attempt: `custom_access_token_hook` failed with "Error running hook URI: ...". Root cause: `supabase_auth_admin` (the role that invokes the hook) has `search_path='auth'` only, so the unqualified `app_role` type reference couldn't resolve. Fixed in `supabase/migrations/0005_fix_hook_search_path.sql` (pinned `search_path = public` on the function, schema-qualified the type), verified by reproducing the restricted search_path before/after.
+- **Verified end-to-end**: first user created via Supabase Studio → auto-bootstrapped as ADMIN/ACTIVE → logged into the app successfully (`wutthichai.aquip@gmail.com`) → JWT hook issues `app_role`/`site_ids` claims correctly.
 
-Blocked / needs your action:
-- **Nobody has signed up yet** — the login flow itself (credentials submit → session → dashboard) hasn't been tested with a real account, since creating one requires your real email (signup confirmation emails are on) and I won't create accounts on your behalf. Sign up as the first user (no dedicated `/signup` page built yet, only `/login` — sign up via Supabase Studio's Authentication > Users > Invite, or tell me and I'll build a signup page) and you'll automatically become ADMIN.
-- **Public self-signup is currently ON** (`enable_signup = true`, project default — I have not changed this). For an internal company system you may want ADMIN-only invites instead once you have your first admin account; flagging rather than changing it myself since it's an auth security setting.
+Known gaps (not blocking, just not done):
+- No dedicated `/signup` page — new users are currently created via Supabase Studio (Authentication > Users) rather than self-serve signup in the app.
+- **Public self-signup is currently ON** (`enable_signup = true`, project default — I have not changed this). For an internal company system you may want ADMIN-only invites instead; flagging rather than changing it myself since it's an auth security setting.
 - `role_permissions` seed (view-only default for non-ADMIN roles) needs real business sign-off per role/module — not blocking, just not final.
 
 Not started: item/lot/location schema (Phase 2), everything after.
@@ -56,6 +58,7 @@ Not started: item/lot/location schema (Phase 2), everything after.
 - `supabase/migrations/0002_users_permissions.sql` — roles, sites, user_profiles, user_sites, role_permissions, audit_log, custom JWT claims hook, RLS
 - `supabase/migrations/0003_bootstrap_first_admin.sql` — first signup becomes ADMIN
 - `supabase/migrations/0004_fix_bootstrap_role_cast.sql` — fixes the enum-cast bug in 0003
+- `supabase/migrations/0005_fix_hook_search_path.sql` — fixes search_path bug in the JWT claims hook
 - `src/proxy.ts` — auth-gate for all routes except `/login` (Next.js 16 middleware replacement)
 - `src/app/(app)/layout.tsx` — authenticated shell (Sidebar/Header), redirects to `/login` if no session
 - `src/app/login/page.tsx` — sign-in
