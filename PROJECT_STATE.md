@@ -12,6 +12,7 @@
 - Notification channels: in-app + email + **LINE Notify/LINE OA**
 - Document number format: `<PREFIX>-<YYYY>-<00001>` รีเซ็ตรายปีทุกประเภทเอกสาร (ดู `document_number_config`)
 - Barcode symbology: **QR Code** (มือถือ scan ได้ง่ายกว่า, เก็บข้อมูลได้เยอะกว่า Code128). Payload เป็น JSON versioned: `{v, type: LOT|LOCATION|SHIPMENT, id (uuid, ใช้ query DB สด), code (human-readable), part_no, site}`. หลักการสำคัญ: field ที่เปลี่ยนได้หลังพิมพ์ป้าย (qty, QC status) **ห้าม**ฝังใน QR — แอปต้อง query DB สดด้วย `id` เสมอ, ห้ามเชื่อค่าที่ scan ได้ตัดสินใจ business logic
+- Stock planning color thresholds: **RED** = Projected Stock < 0, **YELLOW** = 0 ≤ Projected Stock < Safety Stock, **GREEN** = Projected Stock ≥ Safety Stock (compares against Safety Stock only, not Lead Time)
 
 ## Phase 0 — Foundation: สถานะ **บางส่วน**
 
@@ -80,6 +81,21 @@ Known gaps:
 - `.xlsx` binary import not supported, CSV only.
 - No auto-cascade when a new revision is submitted (older batches for that customer don't automatically move to REVISED) — left as a manual transition since I wasn't sure that's the business rule you want; flag if you'd rather it be automatic.
 
+## Phase 4 — Demand & Stock Planning: สถานะ **บางส่วน (DB เสร็จ+verified, UI ยังไม่ได้ทดสอบในเบราว์เซอร์)**
+
+⚠️ **สำคัญ**: Phase นี้ต้องใช้ข้อมูลจาก Customer Order (Phase 12), FG Stock (Phase 11), WIP Stock (Phase 8), Incoming/Receiving (Phase 6), Open PO (Phase 5) — **ยังไม่มีตารางเหล่านี้เลย** จึง hardcode เป็น 0 ไว้ก่อน พร้อม TODO comment ระบุชัดว่า Phase ไหนจะมาแทนที่ค่าไหนใน `refresh_stock_planning()`. ตัวเลข Projected Stock ตอนนี้คำนวณจาก **Forecast + Safety Stock เท่านั้น** — ไม่ใช่ค่าสมบูรณ์ที่ใช้ตัดสินใจสั่งซื้อได้จริง มี banner สีส้มเตือนไว้บนหน้า UI แล้ว
+
+Done:
+- Migration `supabase/migrations/0008_demand_stock_planning.sql`: `stock_planning_snapshot` table + `refresh_stock_planning()` (delete+recompute all active items in one transaction, not per-row updates) + **pg_cron hourly schedule** (`0 * * * *`) — confirmed active in `cron.job`. Formula: `Projected Stock = FG + WIP + Incoming + Open PO − Customer Order − Forecast` (all zero except Forecast right now).
+- เกณฑ์สี (ยืนยันกับคุณแล้ว): **RED** = Projected Stock < 0, **YELLOW** = 0 ≤ Projected Stock < Safety Stock, **GREEN** = Projected Stock ≥ Safety Stock.
+- Verified against real dev DB with a hand-calculated case (safety_stock=50, next-month forecast=80 from a SUBMITTED batch): got projected_stock=−80, shortage=80, purchase_requirement=130, status=RED — matches manual calculation exactly. Forecast aggregation correctly takes the **latest version per (item, month, customer)** and only counts SUBMITTED/APPROVED batches (excludes DRAFT/CANCELLED). Cleaned up all test data after.
+- UI: `/planning` — table with GREEN/YELLOW/RED badges, manual "Refresh now" button (calls the same RPC pg_cron uses) in addition to the hourly auto-refresh, explicit warning banner about the 0-placeholder inputs.
+- Build + typecheck + lint pass, dev server starts clean with no runtime errors on the (pre-auth) route. **UI not yet verified in browser with a real session.**
+
+Known gaps / follow-ups for later phases:
+- When Phase 5/6/8/11/12 land, go back to `refresh_stock_planning()` and replace each `0::numeric as X -- TODO Phase N` line with a real subquery against the new table.
+- "Next month" is currently the only forecast window considered — may want to extend to a multi-month rolling horizon once Purchase Requirement needs to look further ahead (matches Lead Time).
+
 ## Key files
 
 - `supabase/migrations/0001_document_numbering.sql` — document numbering
@@ -95,6 +111,8 @@ Known gaps:
 - `src/lib/csv.ts` — hand-written CSV parser (no vulnerable xlsx dependency)
 - `src/types/forecast.ts` — forecast types + legal status transition map
 - `src/app/(app)/forecast/` — Customer Forecast page (CSV import + batch list)
+- `supabase/migrations/0008_demand_stock_planning.sql` — stock_planning_snapshot, refresh_stock_planning(), pg_cron hourly job
+- `src/types/planning.ts`, `src/app/(app)/planning/` — Demand & Stock Planning dashboard
 - `src/proxy.ts` — auth-gate for all routes except `/login` (Next.js 16 middleware replacement)
 - `src/app/(app)/layout.tsx` — authenticated shell (Sidebar/Header), redirects to `/login` if no session
 - `src/app/login/page.tsx` — sign-in
