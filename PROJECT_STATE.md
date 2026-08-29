@@ -66,6 +66,20 @@ Known gaps:
 - `aql_sampling_plans` is empty — QC needs to populate it from the real standard document before Phase 7 (IQC) can auto-calculate sample sizes.
 - Special inspection levels S-1..S-4 not seeded in `sample_size_code_letters` (only General I/II/III) — add if you use special levels.
 
+## Phase 3 — Customer Forecast: สถานะ **บางส่วน (DB เสร็จ+verified, UI ยังไม่ได้ทดสอบในเบราว์เซอร์)**
+
+Done:
+- Migration `supabase/migrations/0007_customer_forecast.sql`: `forecast_batches` (header, `forecast_no` via Phase 0 document numbering, `revision_no` per customer via atomic counter), `forecast_lines` (**append-only** — every edit is a new row with an incremented `version`, old values are never touched, matching the Stock-Ledger principle from section 3). `create_forecast_batch(customer_id, lines)` RPC does header+lines in one transaction; `update_forecast_batch_status()` RPC enforces legal DRAFT→SUBMITTED→APPROVED→REVISED/CANCELLED transitions only, each gated by the matching `role_permissions` action (submit=edit, approve=approve, cancel/send-back=reject).
+- Verified against the real dev DB: submitted 2 batches for the same customer+item+month — confirmed old version preserved untouched (100/v1) and new version appended (120/v2) rather than overwritten; confirmed illegal transition (SUBMITTED→REVISED) rejected; confirmed a role without `can_approve` (QC, default permissions) is blocked from approving; confirmed the legal path (submit→approve) works and audit_log captured exactly 2 inserts + 2 updates. All test data cleaned up after.
+- UI: `/forecast` — CSV import (customer + `part_no,forecast_month,forecast_qty` columns) with client-side parse/validate/preview before submit, batch list with inline status-transition buttons, expandable line-level detail per batch.
+- Used a **hand-written CSV parser** (`src/lib/csv.ts`) instead of the `xlsx` npm package — `xlsx`/SheetJS has two unpatched high-severity advisories (prototype pollution, ReDoS), both exploitable via a malicious uploaded file, which is exactly this feature's attack surface. `.xlsx` binary import is not supported yet, only `.csv` (Excel exports to CSV trivially).
+- ⚠️ Bug found and fixed before you saw it: `EntityManager`'s `formatCell` prop (a function) was being passed from a Server Component (`master-data/page.tsx`) to a Client Component — Next.js doesn't allow functions across that boundary, so `/master-data` crashed at runtime (not caught by `next build` because that route is dynamic — data-fetching only actually runs on a real request, not at build time). Fixed by replacing the function prop with a plain serializable lookup-map (`cellLabelMaps`). Also hit unrelated Turbopack dev-cache corruption from running `next build` and `next dev` against the same `.next` folder concurrently — cleared `.next` and confirmed a clean server start with no errors.
+- Build + typecheck + lint all pass. **UI not yet verified in browser with a real session** — same as Phase 2, I don't have your login credentials.
+
+Known gaps:
+- `.xlsx` binary import not supported, CSV only.
+- No auto-cascade when a new revision is submitted (older batches for that customer don't automatically move to REVISED) — left as a manual transition since I wasn't sure that's the business rule you want; flag if you'd rather it be automatic.
+
 ## Key files
 
 - `supabase/migrations/0001_document_numbering.sql` — document numbering
@@ -77,6 +91,10 @@ Known gaps:
 - `src/types/master-data.ts` — types for all Phase 2 tables
 - `src/components/master-data/EntityManager.tsx`, `Field.tsx` — shared list+add-form UI used by all `/master-data` tabs
 - `src/app/(app)/master-data/` — Master Data page + tabs
+- `supabase/migrations/0007_customer_forecast.sql` — forecast_batches, forecast_lines (append-only), create_forecast_batch(), update_forecast_batch_status()
+- `src/lib/csv.ts` — hand-written CSV parser (no vulnerable xlsx dependency)
+- `src/types/forecast.ts` — forecast types + legal status transition map
+- `src/app/(app)/forecast/` — Customer Forecast page (CSV import + batch list)
 - `src/proxy.ts` — auth-gate for all routes except `/login` (Next.js 16 middleware replacement)
 - `src/app/(app)/layout.tsx` — authenticated shell (Sidebar/Header), redirects to `/login` if no session
 - `src/app/login/page.tsx` — sign-in

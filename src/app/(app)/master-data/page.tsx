@@ -62,12 +62,10 @@ export default async function MasterDataPage() {
   const inspectionPlanRows = inspectionPlans.data ?? [];
   const aqlPlanRows = aqlPlans.data ?? [];
 
-  const customerLabel = (id: string | null) =>
-    customerRows.find((c) => c.id === id)?.code ?? "—";
-  const supplierLabel = (id: string | null) =>
-    supplierRows.find((s) => s.id === id)?.code ?? "—";
-  const siteLabel = (id: string) => siteRows.find((s) => s.id === id)?.code ?? "—";
-  const itemLabel = (id: string) => itemRows.find((i) => i.id === id)?.part_no ?? "—";
+  const customerIdToCode = Object.fromEntries(customerRows.map((c) => [c.id, c.code]));
+  const supplierIdToCode = Object.fromEntries(supplierRows.map((s) => [s.id, s.code]));
+  const siteIdToCode = Object.fromEntries(siteRows.map((s) => [s.id, s.code]));
+  const itemIdToPartNo = Object.fromEntries(itemRows.map((i) => [i.id, i.part_no]));
 
   return (
     <div className="flex flex-col gap-4">
@@ -155,11 +153,7 @@ export default async function MasterDataPage() {
                   { key: "status", label: "Status" },
                 ]}
                 initialRows={itemRows}
-                formatCell={(row, key) => {
-                  if (key === "customer_id") return customerLabel(row.customer_id);
-                  if (key === "supplier_id") return supplierLabel(row.supplier_id);
-                  return String((row as Record<string, unknown>)[key] ?? "—");
-                }}
+                cellLabelMaps={{ customer_id: customerIdToCode, supplier_id: supplierIdToCode }}
                 fields={[
                   { key: "part_no", label: "Part No.", type: "text", required: true },
                   { key: "description", label: "Description", type: "text" },
@@ -205,10 +199,7 @@ export default async function MasterDataPage() {
                   { key: "status", label: "Status" },
                 ]}
                 initialRows={locationRows}
-                formatCell={(row, key) => {
-                  if (key === "site_id") return siteLabel(row.site_id);
-                  return String((row as Record<string, unknown>)[key] ?? "—");
-                }}
+                cellLabelMaps={{ site_id: siteIdToCode }}
                 fields={[
                   {
                     key: "site_id",
@@ -250,10 +241,7 @@ export default async function MasterDataPage() {
                   { key: "status", label: "Status" },
                 ]}
                 initialRows={inspectionPlanRows}
-                formatCell={(row, key) => {
-                  if (key === "item_id") return itemLabel(row.item_id);
-                  return String((row as Record<string, unknown>)[key] ?? "—");
-                }}
+                cellLabelMaps={{ item_id: itemIdToPartNo }}
                 fields={[
                   {
                     key: "item_id",

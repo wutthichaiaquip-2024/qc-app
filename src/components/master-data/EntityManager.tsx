@@ -11,7 +11,7 @@ export function EntityManager<T extends Record<string, unknown>>({
   initialRows,
   editable,
   emptyLabel,
-  formatCell,
+  cellLabelMaps,
 }: {
   table: string;
   fields: FieldDef[];
@@ -19,7 +19,8 @@ export function EntityManager<T extends Record<string, unknown>>({
   initialRows: T[];
   editable: boolean;
   emptyLabel: string;
-  formatCell?: (row: T, key: string) => React.ReactNode;
+  /** Per-column lookup: raw value -> display label (e.g. a FK id -> code). Plain data, not a function — Server Components can't pass functions to Client Components. */
+  cellLabelMaps?: Record<string, Record<string, string>>;
 }) {
   const [rows, setRows] = useState(initialRows);
   const [form, setForm] = useState<Record<string, string>>({});
@@ -79,11 +80,15 @@ export function EntityManager<T extends Record<string, unknown>>({
             )}
             {rows.map((row, i) => (
               <tr key={i} className="border-b border-black/5 dark:border-white/5 last:border-0">
-                {columns.map((c) => (
-                  <td key={c.key} className="px-3 py-2 whitespace-nowrap">
-                    {formatCell ? formatCell(row, c.key) : String(row[c.key] ?? "—")}
-                  </td>
-                ))}
+                {columns.map((c) => {
+                  const raw = row[c.key];
+                  const label = cellLabelMaps?.[c.key]?.[String(raw)];
+                  return (
+                    <td key={c.key} className="px-3 py-2 whitespace-nowrap">
+                      {label ?? String(raw ?? "—")}
+                    </td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>
