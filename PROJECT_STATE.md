@@ -96,6 +96,19 @@ Known gaps / follow-ups for later phases:
 - When Phase 5/6/8/11/12 land, go back to `refresh_stock_planning()` and replace each `0::numeric as X -- TODO Phase N` line with a real subquery against the new table.
 - "Next month" is currently the only forecast window considered — may want to extend to a multi-month rolling horizon once Purchase Requirement needs to look further ahead (matches Lead Time).
 
+## Phase 5 — Purchase Order: สถานะ **บางส่วน (DB เสร็จ+verified, UI ยังไม่ได้ทดสอบในเบราว์เซอร์)**
+
+Done:
+- Migration `supabase/migrations/0009_purchase_orders.sql`: `purchase_orders` (header, `po_no` via Phase 0 numbering), `purchase_order_lines` (Part No./Qty/Unit/Unit Price/Required Date/ETA/Technical Spec-Drawing Rev), `purchase_order_line_attachments`. `create_purchase_order()` RPC creates header+lines atomically; `update_purchase_order_status()` enforces DRAFT→SUBMITTED→CONFIRMED/CANCELLED manually (submit=edit, confirm=approve, cancel/send-back=reject permission) — **`PARTIAL_RECEIVED`/`COMPLETED` are intentionally NOT reachable from this RPC**, they'll be set by Phase 6 (Receiving) once goods actually arrive against a line.
+- Supabase Storage bucket `po-attachments` (private, 20MB limit, PDF/DWG/DXF/PNG/JPG) kept separate from QC-photo storage per section 4's non-functional note, with RLS tied to `purchase_orders` view/create/delete permissions. Max size / allowed types are a sensible default I picked, not a business-confirmed policy — adjust `supabase/migrations/0009_purchase_orders.sql`'s bucket insert if you want different limits.
+- Verified against the real dev DB end-to-end: created a PO (`PO-2026-00001`) with a line, confirmed DRAFT→SUBMITTED→CONFIRMED works for ADMIN, confirmed PURCHASING role (default permissions) is blocked from approving, confirmed jumping straight to `PARTIAL_RECEIVED` is rejected as illegal, confirmed audit_log captured exactly the legal operations. Storage bucket config and RLS policies on `storage.objects` confirmed present. All test data cleaned up after.
+- UI: `/purchase-orders` — dynamic multi-line PO creation form, PO list with status-transition buttons, expandable line detail with per-line file upload/list.
+- Build + typecheck + lint pass (caught and fixed a real lint error: `Date.now()` inside an upload handler tripped the `react-hooks/purity` rule — switched to `crypto.randomUUID()` for the storage path). Dev server starts clean, no runtime errors on the route. **UI not yet verified in browser with a real session.**
+
+Known gaps:
+- No PO total value display (sum of qty × unit_price) — not in the doc's column list, can add if wanted.
+- Phase 6 will need its own way to move a PO to PARTIAL_RECEIVED/COMPLETED — likely a dedicated function Receiving calls directly, not through `update_purchase_order_status()`.
+
 ## Key files
 
 - `supabase/migrations/0001_document_numbering.sql` — document numbering
@@ -113,6 +126,8 @@ Known gaps / follow-ups for later phases:
 - `src/app/(app)/forecast/` — Customer Forecast page (CSV import + batch list)
 - `supabase/migrations/0008_demand_stock_planning.sql` — stock_planning_snapshot, refresh_stock_planning(), pg_cron hourly job
 - `src/types/planning.ts`, `src/app/(app)/planning/` — Demand & Stock Planning dashboard
+- `supabase/migrations/0009_purchase_orders.sql` — purchase_orders, purchase_order_lines, purchase_order_line_attachments, po-attachments storage bucket, create_purchase_order(), update_purchase_order_status()
+- `src/types/purchase-order.ts`, `src/app/(app)/purchase-orders/` — Purchase Order page
 - `src/proxy.ts` — auth-gate for all routes except `/login` (Next.js 16 middleware replacement)
 - `src/app/(app)/layout.tsx` — authenticated shell (Sidebar/Header), redirects to `/login` if no session
 - `src/app/login/page.tsx` — sign-in
