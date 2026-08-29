@@ -41,6 +41,7 @@ Done:
 - UI: `/login` (email+password sign-in), route-group shell `src/app/(app)/layout.tsx` redirects unauthenticated users to `/login` (via `src/proxy.ts`, Next.js 16's replacement for `middleware.ts`), `Header` shows real signed-in user + role, `/settings/users` lets ADMIN view all users and change role/status (RLS-enforced; non-admins see read-only).
 - Verified in browser: unauthenticated visit to `/` correctly redirects to `/login`.
 - ⚠️ Incident during this phase: `supabase config push` initially overwrote unrelated auth security settings on the live project (disabled email confirmation, disabled MFA, weakened rate limits) as a side effect of enabling the JWT hook — caught and reverted immediately, confirmed `up to date` against prior values. Lesson: always diff `config push` output before trusting it; don't push config changes without reviewing every line of the diff.
+- ⚠️ Bug found when you tried creating the first user via Supabase Studio: `handle_new_auth_user()` from `0003_bootstrap_first_admin.sql` had `case when v_is_first then 'ADMIN' else null end` — Postgres resolves that CASE to type `text` (not `app_role`), so every single user creation failed with "Database error creating new user" (root cause: `column "role" is of type app_role but expression is of type text"`). Fixed in `supabase/migrations/0004_fix_bootstrap_role_cast.sql` (explicit `::app_role` cast), verified by reproducing the exact insert pattern before and after the fix. Confirmed the failed attempt left no orphaned `auth.users` row (transaction rolled back cleanly) — safe to retry user creation now.
 
 Blocked / needs your action:
 - **Nobody has signed up yet** — the login flow itself (credentials submit → session → dashboard) hasn't been tested with a real account, since creating one requires your real email (signup confirmation emails are on) and I won't create accounts on your behalf. Sign up as the first user (no dedicated `/signup` page built yet, only `/login` — sign up via Supabase Studio's Authentication > Users > Invite, or tell me and I'll build a signup page) and you'll automatically become ADMIN.
@@ -54,6 +55,7 @@ Not started: item/lot/location schema (Phase 2), everything after.
 - `supabase/migrations/0001_document_numbering.sql` — document numbering
 - `supabase/migrations/0002_users_permissions.sql` — roles, sites, user_profiles, user_sites, role_permissions, audit_log, custom JWT claims hook, RLS
 - `supabase/migrations/0003_bootstrap_first_admin.sql` — first signup becomes ADMIN
+- `supabase/migrations/0004_fix_bootstrap_role_cast.sql` — fixes the enum-cast bug in 0003
 - `src/proxy.ts` — auth-gate for all routes except `/login` (Next.js 16 middleware replacement)
 - `src/app/(app)/layout.tsx` — authenticated shell (Sidebar/Header), redirects to `/login` if no session
 - `src/app/login/page.tsx` — sign-in
