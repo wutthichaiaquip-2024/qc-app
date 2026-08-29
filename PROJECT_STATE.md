@@ -11,6 +11,7 @@
 - Supplier CAR/Claim closed-loop tracking: **ยังไม่ทำ** (เก็บแค่ Defect Details)
 - Notification channels: in-app + email + **LINE Notify/LINE OA**
 - Document number format: `<PREFIX>-<YYYY>-<00001>` รีเซ็ตรายปีทุกประเภทเอกสาร (ดู `document_number_config`)
+- Barcode symbology: **QR Code** (มือถือ scan ได้ง่ายกว่า, เก็บข้อมูลได้เยอะกว่า Code128). Payload เป็น JSON versioned: `{v, type: LOT|LOCATION|SHIPMENT, id (uuid, ใช้ query DB สด), code (human-readable), part_no, site}`. หลักการสำคัญ: field ที่เปลี่ยนได้หลังพิมพ์ป้าย (qty, QC status) **ห้าม**ฝังใน QR — แอปต้อง query DB สดด้วย `id` เสมอ, ห้ามเชื่อค่าที่ scan ได้ตัดสินใจ business logic
 
 ## Phase 0 — Foundation: สถานะ **บางส่วน**
 
@@ -29,7 +30,6 @@ Blocked / needs your action:
 - **Docker Desktop is not running/installed on this machine** — local `supabase start` failed (`LegacyDockerLifecycleInspectError`). Not needed right now since we're using the cloud dev project directly, but worth fixing eventually for offline/fast local iteration.
 - **Staging + prod Supabase projects** — only one cloud project (`mmkprjuiiwzttalmuips`) has been linked so far, treated as **dev**. Create separate projects for staging/prod when ready (doc requires 3 real separate projects, not branches).
 - **Vercel deployment** — not connected yet (needs your Vercel account).
-- Barcode symbology/payload standard (Code128 vs QR, payload structure) — not decided yet, needed before Phase 2 schema is finalized.
 
 ## Phase 1 — User & Permission: สถานะ **เสร็จ**
 
@@ -52,6 +52,20 @@ Known gaps (not blocking, just not done):
 
 Not started: item/lot/location schema (Phase 2), everything after.
 
+## Phase 2 — Master Data: สถานะ **บางส่วน (DB เสร็จ+verified, UI ยังไม่ได้ทดสอบในเบราว์เซอร์)**
+
+Done:
+- Migration `supabase/migrations/0006_master_data.sql`: `customers`, `suppliers`, `items` (with `custom_conversion` jsonb — structured factor+rounding, never an eval-able string, per section 3.1), `locations` (site-scoped, `zone_type` check constraint), `sample_size_code_letters` (ISO 2859-1/ANSI Z1.4 Table I, seeded — General Levels I/II/III only, S1-S4 not seeded), `aql_sampling_plans` (Table II-A structure, **intentionally left empty** — these Ac/Re numbers gate real accept/reject decisions, so per your instruction I built the table/UI for QC to enter them from your official standard document rather than guessing), `inspection_plans` (versioned: effective_date + revision_no), `get_sample_size_plan(item_id, lot_size)` RPC that resolves code letter → sample size/Ac/Re for use from Phase 7 onward.
+- New generic `has_permission(module, action)` SQL helper — RLS on every Phase 2 table reads Phase 1's `role_permissions` matrix directly instead of hardcoding role names, so the permission system built in Phase 1 actually drives access here.
+- Verified against the real dev DB: seeded Table I matches the standard exactly (45 rows checked), RLS enabled on all 7 tables, full insert→audit_log→`get_sample_size_plan()` pipeline tested end-to-end with real linked rows (customer→supplier→item→location→inspection_plan→aql_sampling_plan→lookup), all test data cleaned up afterward.
+- UI: `/master-data` with tabs for Customer/Supplier/Item/Location/Inspection Plan/AQL Sampling Table, each a list + add-row form gated by `role_permissions.master_data.can_create`. Reusable `EntityManager`/`FieldInput` components back all six tabs. AQL Sampling Table tab carries an explicit on-screen warning to enter values only from the official standard document.
+- Build + typecheck + lint all pass. **Not yet verified in browser with a real session** — I don't have your login credentials to test past the auth gate; please click through `/master-data` once and tell me if anything looks wrong.
+
+Known gaps:
+- No edit/delete UI yet, only list + add (kept scope contained this round).
+- `aql_sampling_plans` is empty — QC needs to populate it from the real standard document before Phase 7 (IQC) can auto-calculate sample sizes.
+- Special inspection levels S-1..S-4 not seeded in `sample_size_code_letters` (only General I/II/III) — add if you use special levels.
+
 ## Key files
 
 - `supabase/migrations/0001_document_numbering.sql` — document numbering
@@ -59,6 +73,10 @@ Not started: item/lot/location schema (Phase 2), everything after.
 - `supabase/migrations/0003_bootstrap_first_admin.sql` — first signup becomes ADMIN
 - `supabase/migrations/0004_fix_bootstrap_role_cast.sql` — fixes the enum-cast bug in 0003
 - `supabase/migrations/0005_fix_hook_search_path.sql` — fixes search_path bug in the JWT claims hook
+- `supabase/migrations/0006_master_data.sql` — customers, suppliers, items, locations, sample-size lookup tables, inspection_plans, `has_permission()`, `get_sample_size_plan()`
+- `src/types/master-data.ts` — types for all Phase 2 tables
+- `src/components/master-data/EntityManager.tsx`, `Field.tsx` — shared list+add-form UI used by all `/master-data` tabs
+- `src/app/(app)/master-data/` — Master Data page + tabs
 - `src/proxy.ts` — auth-gate for all routes except `/login` (Next.js 16 middleware replacement)
 - `src/app/(app)/layout.tsx` — authenticated shell (Sidebar/Header), redirects to `/login` if no session
 - `src/app/login/page.tsx` — sign-in
