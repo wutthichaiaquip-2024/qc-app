@@ -237,6 +237,18 @@ Done:
 - UI: `/shipping` — SO's grouped by ship-ready allocations (Picking done + OQC PASSed), per-line Box No. assignment, Confirm Shipment groups lines by box number into the RPC payload, shipment history. `get_shipping_queue()` already filters to `PICKED` + OQC-PASSed only, following the same `SECURITY DEFINER` read-function pattern as every earlier queue view.
 - Build + typecheck + lint pass, dev server starts clean, no runtime errors on `/shipping` or `/sales-orders` (checked since the status enum widened). **UI not yet verified in browser with a real session.**
 
+## Phase 17 — Stock Transaction & Traceability: สถานะ **บางส่วน (DB เสร็จ+verified, UI ยังไม่ได้ทดสอบในเบราว์เซอร์)**
+
+Two things this phase actually needed, plus a completeness check on what Phase 6-16 already built:
+
+- **"ทุก Movement สร้าง Transaction พร้อมรายละเอียดครบถ้วน" — already satisfied by construction**: every stock-moving RPC since Phase 6 has written a `stock_transactions` row (13 `txn_type`s across Receiving/IQC/WIP Request/FG Inspection/OQC/Shipping). Nothing new needed here — just confirming the invariant holds, which it does by design.
+- **"Append-only บังคับด้วย DB trigger/permission" — added an actual trigger**, `prevent_stock_transactions_mutation()`, as a second, independent enforcement mechanism beyond RLS (RLS already denies `authenticated` since no mutation policy exists, but a trigger blocks UPDATE/DELETE unconditionally, for any role — verified by literally trying to UPDATE and DELETE a row as the migration-runner role itself, both correctly rejected. Cleanup of test rows required deliberately disabling/re-enabling the trigger, same as a real DBA would have to.).
+- **`get_lot_genealogy()` — true bidirectional trace, not just Phase 8's one-directional walk.** The genealogy chain has **two lot identities** (a receiving lot from Phase 6, and a separately-created FG lot from Phase 10, bridged via `wip_requests`/`fg_inspections`) — Phase 8's `get_lot_traceability()` only ever walked backward from one lot and didn't know about this bridge. This function walks forward (IQC → WIP Request → FG Inspection → new lot → Allocation → Picking → OQC → Shipment → Customer) and backward (→ Receiving → PO → Supplier) from **either** lot identity, recursing exactly once across the WIP-lot→FG-lot bridge (bounded — no deeper chain exists in the schema).
+- Added `find_lot_by_no()` so the UI can resolve a scanned/typed lot number to a lot_id under the same `traceability` permission, without needing separate access to the `lots` table.
+- **Verified against the real dev DB with the full PO→...→Shipment chain**: called `get_lot_genealogy()` on the receiving lot before any downstream processing (showed only upstream Receiving/PO/Supplier, correctly empty downstream); called it again after FG Inspection (now showed the downstream WIP Request → new FG lot link); then, the key test, called it on the **shipped FG lot** — one single call returned the **entire chain end-to-end**: downstream to SO/Picking/OQC/Shipment/Customer, *and* nested `upstream_source_lot` containing the WIP lot's own full genealogy back to Supplier. Confirmed permission gate (temporarily disabled SALES's `traceability.view`, confirmed rejection, restored default). All test data cleaned up after (via the deliberate trigger-disable procedure).
+- UI: `/traceability` — scan/type a Lot No., renders the full chain as a stage-by-stage timeline (Supplier → PO → Receiving → IQC → WIP Request → FG Inspection → ... → SO → Picking → OQC → Shipment → Customer), reusing Phase 6's `ScanInput`/barcode-payload parsing.
+- Build + typecheck + lint pass, dev server starts clean, no runtime errors on the route. **UI not yet verified in browser with a real session.**
+
 ## Key files
 
 - `supabase/migrations/0001_document_numbering.sql` — document numbering
@@ -280,6 +292,9 @@ Done:
 - `src/types/oqc.ts`, `src/app/(app)/oqc/` — OQC page
 - `supabase/migrations/0021_packing_shipping.sql` — shipments, shipment_boxes, shipment_box_lines, confirm_shipment(), get_shipping_queue()
 - `src/types/shipping.ts`, `src/app/(app)/shipping/` — Packing & Shipping page
+- `supabase/migrations/0022_traceability.sql` — append-only trigger, get_lot_genealogy()
+- `supabase/migrations/0023_traceability_lookup.sql` — find_lot_by_no()
+- `src/types/traceability.ts`, `src/app/(app)/traceability/` — Traceability page
 - `src/proxy.ts` — auth-gate for all routes except `/login` (Next.js 16 middleware replacement)
 - `src/app/(app)/layout.tsx` — authenticated shell (Sidebar/Header), redirects to `/login` if no session
 - `src/app/login/page.tsx` — sign-in
