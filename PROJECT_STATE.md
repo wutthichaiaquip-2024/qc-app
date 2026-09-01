@@ -139,6 +139,16 @@ Known gaps:
 - `defect_codes` is empty — QC needs to populate it (same follow-up as the AQL table from Phase 2).
 - No photo attachment on IQC defects (doc's Phase 7 bullet only asks for Defect Code + Condition Note; photos are explicitly a Phase 10 FG Inspection thing).
 
+## Phase 8 — WIP Stock: สถานะ **บางส่วน (DB เสร็จ+verified, UI ยังไม่ได้ทดสอบในเบราว์เซอร์)**
+
+Lighter phase than 5-7 — read-only, no new tables, no stock-moving RPC (WIP stock only ever gets created by Phase 7's `confirm_iqc_inspection`, consumed later starting Phase 9).
+
+Done:
+- Migration `supabase/migrations/0012_wip_stock.sql`: `get_wip_stock()` and `get_lot_traceability(lot_id)` — both `SECURITY DEFINER` SQL functions gated by `has_permission('wip_stock', 'view')` **inside the function**, not via table RLS. Deliberate choice: the underlying tables (`stock_balance`, `iqc_inspections`, `goods_receipts`, `purchase_orders`, `suppliers`, ...) are each gated by their *own* module's permission (`receiving`, `iqc`, `purchase_orders`, `master_data`), so a plain `security_invoker` view joining them would require a user to hold permissions on every one of those modules just to see their own WIP stock. These functions make `wip_stock` view permission the single gate, matching the doc's intent for this screen.
+- Verified against the real dev DB with a full PO→Receiving→IQC(pass)→WIP chain: `get_wip_stock()` correctly shows the lot with qty/location/IQC no./date; `get_lot_traceability()` correctly resolves the full **WIP Lot → IQC → Receiving → PO → Supplier** chain in one call. Also verified the permission gate itself: temporarily set QC's `wip_stock.can_view = false`, confirmed `get_wip_stock()` returned zero rows for QC, restored the default afterward.
+- UI: `/wip-stock` — table of current WIP stock, click a row to expand its traceability chain inline.
+- Build + typecheck + lint pass (fixed a real TS issue: chaining `.returns<T[]>()` directly on `.rpc()` without a generated `Database` type hits a known supabase-js typing quirk — worked around by casting the RPC result instead). Dev server starts clean, no runtime errors on the route. **UI not yet verified in browser with a real session.**
+
 ## Key files
 
 - `supabase/migrations/0001_document_numbering.sql` — document numbering
@@ -164,6 +174,8 @@ Known gaps:
 - `src/types/receiving.ts`, `src/app/(app)/receiving/` — Receiving page
 - `supabase/migrations/0011_incoming_qc.sql` — defect_codes, iqc_inspections, iqc_defects, confirm_iqc_inspection(), widened stock_transactions.txn_type
 - `src/types/iqc.ts`, `src/app/(app)/iqc/` — IQC page (split-lot inspection + defect code management)
+- `supabase/migrations/0012_wip_stock.sql` — get_wip_stock(), get_lot_traceability()
+- `src/types/wip-stock.ts`, `src/app/(app)/wip-stock/` — WIP Stock page (read-only + traceability)
 - `src/proxy.ts` — auth-gate for all routes except `/login` (Next.js 16 middleware replacement)
 - `src/app/(app)/layout.tsx` — authenticated shell (Sidebar/Header), redirects to `/login` if no session
 - `src/app/login/page.tsx` — sign-in
