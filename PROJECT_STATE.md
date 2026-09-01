@@ -217,6 +217,15 @@ Done:
 - UI: `/picking` — SO's grouped by pending allocations, a scan-to-confirm input per SO group (matches scanned Lot No. against the expected line, checks it off), Confirm Picking only enabled once every line in the group is scanned, picking history.
 - Build + typecheck + lint pass, dev server starts clean, no runtime errors on the route. **UI not yet verified in browser with a real session — scanning specifically remains unverified with real hardware, same caveat as Phase 6.**
 
+## Phase 15 — OQC / Final QC: สถานะ **บางส่วน (DB เสร็จ+verified, UI ยังไม่ได้ทดสอบในเบราว์เซอร์)**
+
+Done:
+- Migration `supabase/migrations/0020_oqc.sql`: `oqc_inspections` (one overall PASS/HOLD/NG result **per picking**, not split-lot like IQC/FG — OQC is a final visual/documentation check on already-picked goods as a whole, matching the doc's narrative framing, not a sampling-based quantity split), `oqc_checklist_items` (Appearance/Packaging/Label/Customer Requirement/Certificate/Packing List, each PASS/FAIL + note). Part No./Customer/Quantity/Lot from the doc's field list are reference fields derived from the picking→allocation→lot chain, not re-entered. Widened `stock_transactions.txn_type` with `OQC_OUT`/`OQC_HOLD`/`OQC_NG`.
+- **"HOLD/NG วนกลับเข้า Rework/Hold queue" is a real stock move**, not just a status label: `confirm_oqc()` on PASS changes nothing (allocation stays `PICKED`, ready for Phase 16); on HOLD/NG it locks the stock, moves it out of the FG location into an inspector-chosen HOLD/REWORK location, and releases the allocation so the sales order line can be re-fulfilled from other good stock.
+- Verified against the real dev DB with a full PO→...→Picking chain split into two 20-pc pickings under one 40-pc FG lot: OQC **PASS** left the allocation `PICKED` and stock untouched; OQC **HOLD** (checklist: Label FAILed) correctly moved the 20 pcs from FG (20/20 remaining) into HOLD (20/0 — free, not reserved) and released that allocation — confirmed both balances add back up to the original 40. Also verified: double-OQC on the same picking rejected, role without `create` permission blocked, RLS enabled. All test data cleaned up after.
+- UI: `/oqc` — per-picking checklist form (6 items × PASS/FAIL + note), overall result selector, target-location picker that only appears for HOLD/NG, OQC history.
+- Build + typecheck + lint pass (lint caught one unused-variable warning, cleaned up before shipping). Dev server starts clean, no runtime errors on the route. **UI not yet verified in browser with a real session.**
+
 ## Key files
 
 - `supabase/migrations/0001_document_numbering.sql` — document numbering
@@ -256,6 +265,8 @@ Done:
 - `src/types/allocation.ts`, `src/app/(app)/allocation/` — Stock Allocation page
 - `supabase/migrations/0019_picking.sql` — pickings, picking_lines, confirm_picking(), get_picking_queue()
 - `src/types/picking.ts`, `src/app/(app)/picking/` — Picking page
+- `supabase/migrations/0020_oqc.sql` — oqc_inspections, oqc_checklist_items, confirm_oqc(), get_oqc_queue()
+- `src/types/oqc.ts`, `src/app/(app)/oqc/` — OQC page
 - `src/proxy.ts` — auth-gate for all routes except `/login` (Next.js 16 middleware replacement)
 - `src/app/(app)/layout.tsx` — authenticated shell (Sidebar/Header), redirects to `/login` if no session
 - `src/app/login/page.tsx` — sign-in
