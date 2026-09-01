@@ -157,6 +157,18 @@ Done:
 - UI: `/wip-requests` — pick from live WIP stock (reuses Phase 8's `get_wip_stock()`), qty + inspection plan + purpose, request list with Confirm/Cancel actions gated by `approve`/`reject` permissions. Added to sidebar nav under QC.
 - Build + typecheck + lint pass, dev server starts clean, no runtime errors on the route. **UI not yet verified in browser with a real session.**
 
+## Phase 10 — FG Inspection: สถานะ **บางส่วน (DB เสร็จ+verified, UI ยังไม่ได้ทดสอบในเบราว์เซอร์)**
+
+Done:
+- Migration `supabase/migrations/0014_fg_inspection.sql`: `fg_inspections` (fg_no via existing `fg_inspection` doc_type; inspection_mode SAMPLING/FULL; measurement_method COUNT/WEIGHT; started_at/completed_at for Cycle Time), `fg_inspection_characteristics` (Multiple Characteristics/Measurement), `fg_inspection_defects` (reuses Phase 7's `defect_codes` — same taxonomy for IQC and FG — plus `photo_path`), `item_documents` (Work Instruction / Packing Std. lookup by item).
+- **Real lot genealogy, not prose**: `confirm_fg_inspection()` creates a **brand new FG Lot** (via the same `lot` doc_type as Receiving) — `fg_inspections.wip_request_id` links back to `wip_requests.wip_lot_id` (the WIP Lot), which Phase 8's `get_lot_traceability()` already chains the rest of the way back to IQC → Receiving → PO → Supplier. Split-lot (qty_pass/hold/ng) works exactly like IQC but with **no source stock_balance to decrement** — Phase 9 already cut the WIP side, so this just materializes the outcome as fresh stock under the new lot in FG/HOLD/NG locations.
+- Two new Storage buckets per section 4's non-functional note: `qc-photos` (private, **5MB limit** as specified, PNG/JPEG/WEBP) separate from `po-attachments` (Phase 5) and `item-documents` (10MB, PDF/PNG/JPEG) for Work Instruction/Packing Std files.
+- Verified against the real dev DB with a full PO→Receiving→IQC→WIP Request→FG Inspection chain: split 60 pcs into 50 pass/5 hold/5 ng, confirmed the **new FG lot** (`LOT-2026-00002`) is distinct from the WIP source lot (`LOT-2026-00001`) with correct balances in FG/HOLD/NG, confirmed the original WIP lot's remaining balance (40) was untouched by this operation, confirmed cycle time correctly computed from started_at/completed_at (10 min), confirmed a characteristic and a defect-with-note recorded correctly, confirmed double-inspecting the same WIP request is rejected. Storage bucket configs verified. All test data cleaned up after.
+- UI: `/fg-inspection` — pick a CONFIRMED-but-not-yet-inspected WIP request, mode/method selects, split-lot qty + location entry, dynamic characteristics rows, dynamic defect rows with photo upload, inspection history. Work Instruction/Packing Std. lookup+upload section below (filter by item, view via signed URL).
+- Build + typecheck + lint pass, dev server starts clean, no runtime errors on the route. **UI not yet verified in browser with a real session.**
+
+Known gap: photo upload in the UI isn't verified against a real image (only the storage/RLS wiring is verified via config inspection) — same caveat as barcode scanning in Phase 6, no way to test file upload UX without a real session.
+
 ## Key files
 
 - `supabase/migrations/0001_document_numbering.sql` — document numbering
@@ -186,6 +198,8 @@ Done:
 - `src/types/wip-stock.ts`, `src/app/(app)/wip-stock/` — WIP Stock page (read-only + traceability)
 - `supabase/migrations/0013_wip_request.sql` — wip_requests, create_wip_request(), confirm_wip_request(), cancel_wip_request()
 - `src/types/wip-request.ts`, `src/app/(app)/wip-requests/` — WIP Request page
+- `supabase/migrations/0014_fg_inspection.sql` — fg_inspections, fg_inspection_characteristics, fg_inspection_defects, item_documents, confirm_fg_inspection(), qc-photos + item-documents storage buckets
+- `src/types/fg-inspection.ts`, `src/app/(app)/fg-inspection/` — FG Inspection page + Work Instruction/Packing Std lookup
 - `src/proxy.ts` — auth-gate for all routes except `/login` (Next.js 16 middleware replacement)
 - `src/app/(app)/layout.tsx` — authenticated shell (Sidebar/Header), redirects to `/login` if no session
 - `src/app/login/page.tsx` — sign-in
