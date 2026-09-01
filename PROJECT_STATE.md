@@ -226,6 +226,17 @@ Done:
 - UI: `/oqc` — per-picking checklist form (6 items × PASS/FAIL + note), overall result selector, target-location picker that only appears for HOLD/NG, OQC history.
 - Build + typecheck + lint pass (lint caught one unused-variable warning, cleaned up before shipping). Dev server starts clean, no runtime errors on the route. **UI not yet verified in browser with a real session.**
 
+## Phase 16 — Packing & Shipping: สถานะ **บางส่วน (DB เสร็จ+verified, UI ยังไม่ได้ทดสอบในเบราว์เซอร์)**
+
+**This is where stock is finally, actually cut from the system** — every earlier phase only moved it between zones or reserved it.
+
+Done:
+- Migration `supabase/migrations/0021_packing_shipping.sql`: `shipments` (shipment_no via existing `shipment` doc_type — the doc calls the field "Packing No." but only one doc_type was ever provisioned for this, back in Phase 0), `shipment_boxes` (Box No.), `shipment_box_lines` (references an `allocations` row 1:1). Widened `allocations.status` with `SHIPPED`, `sales_orders.status` with `SHIPPED`, `stock_transactions.txn_type` with `SHIPMENT_OUT`.
+- `confirm_shipment()`: for every allocation being shipped, **requires its picking to have already passed OQC** (enforced by an actual join/exists check, not trusted to the UI) — matches the doc's Picking → OQC → Shipping sequencing. Then locks the source `stock_balance` row and decrements **both `qty` and `reserved_qty` together** — `qty` drops because the goods physically left, `reserved_qty` drops because that specific reservation is now discharged rather than lingering as a phantom hold on stock that no longer exists. This is the literal implementation of "ตัดสต็อกออกจากระบบจริงตอนนี้เอง" from the operational workflow. Auto-advances the sales order to `SHIPPED` once every line is fully covered by `SHIPPED` allocations, mirroring the `PARTIAL_RECEIVED`/`COMPLETED` auto-roll pattern from Phase 6.
+- Verified against the real dev DB with the full PO→...→Picking chain: **confirmed shipping is blocked before OQC has run** (exact error naming the allocation), confirmed it succeeds once OQC PASSes, confirmed `stock_balance` for the shipped lot lands at **exactly 0/0** (qty and reserved both), confirmed the allocation flips to `SHIPPED`, and confirmed the sales order auto-advanced to `SHIPPED` since it was the only line. Also verified: role without `create` permission blocked, RLS enabled on all 3 new tables. All test data cleaned up after.
+- UI: `/shipping` — SO's grouped by ship-ready allocations (Picking done + OQC PASSed), per-line Box No. assignment, Confirm Shipment groups lines by box number into the RPC payload, shipment history. `get_shipping_queue()` already filters to `PICKED` + OQC-PASSed only, following the same `SECURITY DEFINER` read-function pattern as every earlier queue view.
+- Build + typecheck + lint pass, dev server starts clean, no runtime errors on `/shipping` or `/sales-orders` (checked since the status enum widened). **UI not yet verified in browser with a real session.**
+
 ## Key files
 
 - `supabase/migrations/0001_document_numbering.sql` — document numbering
@@ -267,6 +278,8 @@ Done:
 - `src/types/picking.ts`, `src/app/(app)/picking/` — Picking page
 - `supabase/migrations/0020_oqc.sql` — oqc_inspections, oqc_checklist_items, confirm_oqc(), get_oqc_queue()
 - `src/types/oqc.ts`, `src/app/(app)/oqc/` — OQC page
+- `supabase/migrations/0021_packing_shipping.sql` — shipments, shipment_boxes, shipment_box_lines, confirm_shipment(), get_shipping_queue()
+- `src/types/shipping.ts`, `src/app/(app)/shipping/` — Packing & Shipping page
 - `src/proxy.ts` — auth-gate for all routes except `/login` (Next.js 16 middleware replacement)
 - `src/app/(app)/layout.tsx` — authenticated shell (Sidebar/Header), redirects to `/login` if no session
 - `src/app/login/page.tsx` — sign-in
