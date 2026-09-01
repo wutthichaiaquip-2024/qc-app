@@ -29,6 +29,7 @@ export const MODULES = [
   "reports",
   "master_data",
   "users_permissions",
+  "stock_adjustments",
 ] as const;
 
 export type Module = (typeof MODULES)[number];

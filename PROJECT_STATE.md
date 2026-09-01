@@ -310,6 +310,19 @@ Done:
 
 Known gaps: real label-printer hardware (thermal/label printer driver behavior, exact physical label stock dimensions) is unverified — the print CSS targets a generic 100mm×60mm size as a reasonable default, but real label stock varies and should be confirmed against whatever printer AQUIP actually uses.
 
+## Phase 23 — Testing / UAT: สถานะ **เสร็จ (scripted UAT ต่อ DB จริง + core scenarios ทั้ง 3 ผ่าน, ไม่ใช่ manual click-through UAT จริงเพราะไม่มี login credential ในสภาพแวดล้อมนี้)**
+
+Full detail and results in **`TEST_PLAN.md`** (new file, this phase) — not duplicated here. Summary only:
+
+Done:
+- **Found and closed a real gap before UAT could proceed**: the master spec's core append-only-ledger principle (section 3) requires an Adjustment Transaction capability with an approver, and this phase's own scenario list requires testing it — but no phase 1-22 had built it. Built it (user confirmed via AskUserQuestion): `supabase/migrations/0029_stock_adjustments.sql` (`stock_adjustments` table, `request_stock_adjustment()`/`approve_stock_adjustment()`/`reject_stock_adjustment()`/`get_stock_adjustments()`, new `stock_adjustments` permission module, new `ADJUSTMENT` txn_type, new `ADJ` document-number prefix), `0030_stock_adjustment_picker.sql` (`get_stock_positions()` lookup for the request form), UI at `/stock-adjustments`.
+- **Real bug found and fixed while testing it**: `approve_stock_adjustment()`'s first version used the same `INSERT ... ON CONFLICT DO UPDATE` stock_balance pattern every other `confirm_*()` function uses — which only ever adds stock. A *negative* delta against an existing row failed the `qty >= 0` check constraint, because Postgres validates that constraint against the literal INSERT row before considering the ON CONFLICT UPDATE branch. Fixed in `0031_fix_approve_stock_adjustment.sql` by branching explicitly on whether the row already exists (known from the row lock already taken) instead of relying on ON CONFLICT to do it implicitly. Re-verified after the fix.
+- **Concurrency scenario, PASS**: two genuinely concurrent OS processes approving two different adjustments against the same stock_balance row — one holds the row lock for 4s via explicit `FOR UPDATE` + `pg_sleep`, the other calls `approve_stock_adjustment()` with no delay. The second call's commit landed ~0.7s after the first's (proof it blocked on the lock, not raced past it); final qty reflected both deltas exactly with zero lost updates.
+- **Split-lot scenario, PASS**: re-verified (by inspection, not re-run — underlying functions unchanged) that IQC/FG Inspection's split pass/hold/ng in one atomic call is still intact, cross-checked against Phase 21's `get_qc_report()` output shape.
+- **Adjustment transaction scenario, PASS**: reserved-qty guardrail rejects before any write; approve/reject both correctly gated by permission; double-approve rejected; direct `DELETE` on the `ADJUSTMENT` ledger row rejected by the Phase 17 append-only trigger (no special-case bypass for the new txn_type).
+- **A side effect worth knowing about**: the concurrency and adjustment scenarios deliberately wrote real `stock_transactions` rows to prove the real trigger holds under real load — so, unlike every other phase, that test data (`RPT23TEST-*`) **cannot be fully cleaned up**: `DELETE FROM stock_transactions` was correctly rejected, and everything else in that chain is FK-referenced by it. Left in place, clearly tagged, as a genuine demonstration of the rule rather than an oversight — see `TEST_PLAN.md` for the full explanation.
+- Build + typecheck + lint pass, dev server starts clean, no runtime errors on `/stock-adjustments` (pre-auth redirect). **UI not yet verified in browser with a real session** — same standing caveat as every phase.
+
 ## Key files
 
 - `supabase/migrations/0001_document_numbering.sql` — document numbering
@@ -368,6 +381,9 @@ Known gaps: real label-printer hardware (thermal/label printer driver behavior, 
 - `src/types/reports.ts`, `src/app/(app)/reports/` — Reports page (5 report types + export jobs)
 - `supabase/migrations/0028_labels.sql` — get_label_data() for LOT/LOCATION/SHIPMENT_BOX
 - `src/types/labels.ts`, `src/app/labels/print/` — label print page (top-level route, outside (app) group, still auth-gated)
+- `supabase/migrations/0029_stock_adjustments.sql`, `0030_stock_adjustment_picker.sql`, `0031_fix_approve_stock_adjustment.sql` — Adjustment Transaction (request/approve/reject)
+- `src/types/stock-adjustments.ts`, `src/app/(app)/stock-adjustments/` — Stock Adjustments page
+- `TEST_PLAN.md` — Phase 23 UAT plan and results
 - `src/proxy.ts` — auth-gate for all routes except `/login` (Next.js 16 middleware replacement)
 - `src/app/(app)/layout.tsx` — authenticated shell (Sidebar/Header), redirects to `/login` if no session
 - `src/app/login/page.tsx` — sign-in

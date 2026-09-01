@@ -55,6 +55,7 @@ export const navGroups: NavGroup[] = [
     items: [
       { label: "Traceability", href: "/traceability" },
       { label: "Reports", href: "/reports" },
+      { label: "Stock Adjustments", href: "/stock-adjustments" },
       { label: "Master Data", href: "/master-data" },
       { label: "Users & Permissions", href: "/settings/users" },
     ],
