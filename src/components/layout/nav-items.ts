@@ -20,6 +20,7 @@ export const navGroups: NavGroup[] = [
     items: [
       { label: "Customer Forecast", href: "/forecast" },
       { label: "Demand & Stock Planning", href: "/planning" },
+      { label: "Forecast Accuracy", href: "/forecast-accuracy" },
     ],
   },
   {

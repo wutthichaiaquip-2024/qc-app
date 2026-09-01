@@ -258,6 +258,17 @@ Done:
 - UI: filled in the Phase 0 dashboard shell at `/` (the app's home route) with 4 sections — Management, Planning, Warehouse, QC — each rendering its dashboard's stats, with a "last refreshed" timestamp.
 - Build + typecheck + lint pass, dev server starts clean, no runtime errors. **UI not yet verified in browser with a real session.**
 
+## Phase 19 — Forecast Accuracy: สถานะ **บางส่วน (DB เสร็จ+verified, UI ยังไม่ได้ทดสอบในเบราว์เซอร์)**
+
+Done:
+- Migration `supabase/migrations/0025_forecast_accuracy.sql`: `get_forecast_accuracy()` — a **live** query (not materialized/cached like Phase 4/18), since the doc says compare "หลัง Shipment ทุกครั้ง" and a plain query against current data is inherently up to date after the latest shipment without needing a refresh trigger.
+- Compares Forecast (latest SUBMITTED/APPROVED version per customer+item+month, reusing the exact same "latest forecast" logic as Phase 4) vs Actual Order (`sales_order_lines.qty`) vs Actual Shipment (`SHIPPED` allocations), all three **bucketed by the sales order line's own `delivery_date` month** — not by when things happened to post (order date, ship date) — so forecast/actual-order/actual-shipment stay anchored to the same "need period" the customer originally named, which is what an accuracy comparison is supposed to measure.
+- Computes `accuracy_pct` (clamped at 0, avoids negative accuracy for wildly-off forecasts), `bias_pct` (signed — negative means under-shipped vs forecast), `variance_qty` (raw quantity difference); all three correctly return `null` instead of dividing by zero when forecast_qty is 0.
+- **"ป้อนกลับเข้า Phase 4" is implemented as informational data available to Planning, not an automatic change to Phase 4's shortage/surplus formula** — deliberately not touching `refresh_stock_planning()`'s calculation, since silently changing that behavior based on historical accuracy is a real business decision I didn't want to assume.
+- Verified against the real dev DB with a hand-computed case (forecast=100, actual order=90, actual shipment=80, all for the same customer+item+October): got `accuracy_pct=80.0`, `bias_pct=-20.0`, `variance_qty=-20` — exact match. Confirmed the permission gate (temporarily disabled a role's `planning.view`, got 0 rows, restored default). All test data cleaned up after.
+- UI: `/forecast-accuracy` — table of all customer/part/month combinations with Forecast/Actual Order/Actual Shipment/Accuracy/Bias/Variance, bias colored red (under) / amber (over). Added to sidebar nav under Planning.
+- Build + typecheck + lint pass, dev server starts clean, no runtime errors on the route. **UI not yet verified in browser with a real session.**
+
 ## Key files
 
 - `supabase/migrations/0001_document_numbering.sql` — document numbering
@@ -306,6 +317,8 @@ Done:
 - `src/types/traceability.ts`, `src/app/(app)/traceability/` — Traceability page
 - `supabase/migrations/0024_dashboard.sql` — 4 materialized views, refresh_dashboards(), get_*_dashboard() wrapper functions, hourly pg_cron job
 - `src/types/dashboard.ts`, `src/app/(app)/page.tsx` — Dashboard (home route)
+- `supabase/migrations/0025_forecast_accuracy.sql` — get_forecast_accuracy()
+- `src/types/forecast-accuracy.ts`, `src/app/(app)/forecast-accuracy/` — Forecast Accuracy page
 - `src/proxy.ts` — auth-gate for all routes except `/login` (Next.js 16 middleware replacement)
 - `src/app/(app)/layout.tsx` — authenticated shell (Sidebar/Header), redirects to `/login` if no session
 - `src/app/login/page.tsx` — sign-in
