@@ -169,6 +169,18 @@ Done:
 
 Known gap: photo upload in the UI isn't verified against a real image (only the storage/RLS wiring is verified via config inspection) — same caveat as barcode scanning in Phase 6, no way to test file upload UX without a real session.
 
+## Phase 11 — FG Stock: สถานะ **บางส่วน (DB เสร็จ+verified, UI ยังไม่ได้ทดสอบในเบราว์เซอร์)**
+
+Read-only, same pattern as Phase 8's WIP Stock — but with a real DB-level constraint this time, not just prose.
+
+Done:
+- Migration `supabase/migrations/0015_fg_stock.sql`: added `reserved_qty` to `stock_balance` (`check (reserved_qty >= 0 and reserved_qty <= qty)`) so `Available Qty = qty - reserved_qty` is meaningful — stays 0 everywhere until Phase 13 (Stock Allocation) starts writing to it.
+- **"เข้า FG Stock ได้เฉพาะที่ผ่าน FG Inspection แล้วเท่านั้น (บังคับผ่าน DB constraint)" implemented literally as a trigger**, not just "nothing else happens to write there": `enforce_fg_stock_origin()` fires on every insert/update to `stock_balance` and, for any row landing in an FG-zone location, requires a matching `FG_PASS` `stock_transactions` entry to already exist for that exact (lot, location) — checked at the DB level regardless of which code path attempts the write, not relying on RLS/RPC discipline alone. Required re-creating `confirm_fg_inspection()` with the `stock_transactions` insert moved before the `stock_balance` insert so the trigger sees it in the same transaction.
+- `get_fg_stock()` — same `SECURITY DEFINER` + `has_permission('fg_stock', 'view')` pattern as Phase 8.
+- Verified against the real dev DB: **directly tried to bypass the RPC** with a raw `INSERT INTO stock_balance` into an FG-zone location with no prior `FG_PASS` transaction — correctly rejected by the trigger. Re-ran the full PO→Receiving→IQC→WIP Request→FG Inspection chain to confirm the reordered `confirm_fg_inspection()` still works and legitimately passes its own new trigger. `get_fg_stock()` returned correct qty/reserved/available/lot/inspection info. Tried setting `reserved_qty` above `qty` directly — correctly rejected by the check constraint. All test data cleaned up after.
+- UI: `/fg-stock` — table matching the doc's exact column list (Part No., FG Lot, Qty, Location, Inspection No./Date, QC Status, Available Qty, Reserved Qty).
+- Build + typecheck + lint pass, dev server starts clean, no runtime errors on the route. **UI not yet verified in browser with a real session.**
+
 ## Key files
 
 - `supabase/migrations/0001_document_numbering.sql` — document numbering
@@ -200,6 +212,8 @@ Known gap: photo upload in the UI isn't verified against a real image (only the 
 - `src/types/wip-request.ts`, `src/app/(app)/wip-requests/` — WIP Request page
 - `supabase/migrations/0014_fg_inspection.sql` — fg_inspections, fg_inspection_characteristics, fg_inspection_defects, item_documents, confirm_fg_inspection(), qc-photos + item-documents storage buckets
 - `src/types/fg-inspection.ts`, `src/app/(app)/fg-inspection/` — FG Inspection page + Work Instruction/Packing Std lookup
+- `supabase/migrations/0015_fg_stock.sql` — reserved_qty on stock_balance, enforce_fg_stock_origin() trigger, get_fg_stock()
+- `src/types/fg-stock.ts`, `src/app/(app)/fg-stock/` — FG Stock page
 - `src/proxy.ts` — auth-gate for all routes except `/login` (Next.js 16 middleware replacement)
 - `src/app/(app)/layout.tsx` — authenticated shell (Sidebar/Header), redirects to `/login` if no session
 - `src/app/login/page.tsx` — sign-in
