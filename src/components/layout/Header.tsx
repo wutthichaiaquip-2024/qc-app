@@ -1,5 +1,6 @@
 import type { UserProfile } from "@/types/auth";
 import { SignOutButton } from "./SignOutButton";
+import { NotificationBell } from "./NotificationBell";
 
 const STATUS_LABEL: Record<UserProfile["status"], string> = {
   PENDING: "รออนุมัติสิทธิ์",
@@ -22,6 +23,7 @@ export function Header({
         <span className="font-medium">— select site —</span>
       </div>
       <div className="flex items-center gap-3 text-sm">
+        <NotificationBell />
         <div className="flex flex-col items-end leading-tight">
           <span className="font-medium">{profile?.full_name || email}</span>
           <span className="text-xs text-black/50 dark:text-white/50">

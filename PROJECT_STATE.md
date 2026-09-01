@@ -269,6 +269,18 @@ Done:
 - UI: `/forecast-accuracy` — table of all customer/part/month combinations with Forecast/Actual Order/Actual Shipment/Accuracy/Bias/Variance, bias colored red (under) / amber (over). Added to sidebar nav under Planning.
 - Build + typecheck + lint pass, dev server starts clean, no runtime errors on the route. **UI not yet verified in browser with a real session.**
 
+## Phase 20 — Notification & Automation: สถานะ **บางส่วน (In-app เสร็จ+verified, Email/LINE เป็นโค้ดจริงแต่ยังไม่ deploy/ยังไม่ทดสอบ, UI ยังไม่ได้ทดสอบในเบราว์เซอร์)**
+
+Done:
+- Migration `supabase/migrations/0026_notifications.sql`: `notifications`, `notification_reads` (per-user read tracking), `notification_channel_log` (EMAIL/LINE delivery status), `user_profiles.line_user_id` (placeholder column for a future LINE account-linking flow — nothing populates it yet).
+- `generate_notifications()` checks one condition per role each run — Planning (any RED row in `stock_planning_snapshot`), Purchasing (any positive `purchase_requirement_qty`), QC (anything pending IQC/FG Inspection/OQC), Warehouse (pending WIP Requests or picked-but-not-yet-shipped allocations) — dedup'd via a `condition_key` `UNIQUE` constraint (`'planning_red_' || YYYYMMDD` etc.) with `ON CONFLICT DO NOTHING`, so the hourly `pg_cron` job (`generate-notifications-hourly`, matching Phase 4/18's cadence) naturally produces at most one notification per condition per day instead of needing separate time-window bookkeeping.
+- `get_my_notifications()` (role-scoped, `SECURITY DEFINER`) and `mark_notification_read()` (per-user, upserts into `notification_reads`) — the same permission-gated wrapper-function pattern used since Phase 8.
+- Verified against the real dev DB: inserted a test item + a fabricated RED `stock_planning_snapshot` row, ran `generate_notifications()` — got exactly 2 notifications (Planning + Purchasing; QC/Warehouse correctly produced none since nothing was actually pending); ran it again — still exactly 2, confirming the dedup works; `notification_channel_log` had exactly 4 rows (2 notifications × EMAIL+LINE), all `PENDING`, no duplicates from the second run; `get_my_notifications()` as PLANNING correctly returned only the Planning notification; `mark_notification_read()` correctly set `read_at` (needed `sub`, not just `app_role`, in the simulated JWT claims, since it relies on `auth.uid()`). All test data cleaned up after.
+- **Email/LINE sending is real, correct code that is NOT deployed and NOT tested** — `supabase/functions/send-notifications/index.ts` reads `PENDING` rows from `notification_channel_log`, resolves recipients by role (`user_profiles` joined to `auth.users` for email, filtered by `line_user_id is not null` for LINE), sends via Resend (email) and the LINE Messaging API push endpoint (LINE), and marks each row `SENT`/`FAILED`. There are no real Resend or LINE Channel Access Token credentials in this environment, so this has never actually run. It also has no scheduled trigger wired up (needs `pg_cron`+`pg_net` or an external scheduler calling it after `generate_notifications()`) and LINE delivery has zero recipients until a `line_user_id`-linking flow exists — none of that is built. Deploying requires `supabase secrets set RESEND_API_KEY=... RESEND_FROM_EMAIL=... LINE_CHANNEL_ACCESS_TOKEN=...` then `supabase functions deploy send-notifications`, done by the user.
+- `tsconfig.json` now excludes `supabase/functions` (Deno runtime, not part of the Next.js/Node TypeScript project — was breaking `next build`'s typecheck otherwise).
+- UI: notification bell in `Header.tsx` (`NotificationBell.tsx`, polls `get_my_notifications()` every 60s, unread-count badge, dropdown list, click-to-mark-read, links to the relevant page) — not a dedicated page, since the spec's per-role conditions are few enough to fit a dropdown.
+- Build + typecheck + lint pass, dev server starts clean, no runtime errors on the (pre-auth) route. **UI not yet verified in browser with a real session.**
+
 ## Key files
 
 - `supabase/migrations/0001_document_numbering.sql` — document numbering
@@ -319,6 +331,9 @@ Done:
 - `src/types/dashboard.ts`, `src/app/(app)/page.tsx` — Dashboard (home route)
 - `supabase/migrations/0025_forecast_accuracy.sql` — get_forecast_accuracy()
 - `src/types/forecast-accuracy.ts`, `src/app/(app)/forecast-accuracy/` — Forecast Accuracy page
+- `supabase/migrations/0026_notifications.sql` — notifications, notification_reads, notification_channel_log, generate_notifications(), get_my_notifications(), mark_notification_read(), hourly pg_cron job
+- `supabase/functions/send-notifications/index.ts` — Email (Resend) + LINE push sender, real code, NOT deployed/tested
+- `src/types/notifications.ts`, `src/components/layout/NotificationBell.tsx` — notification bell in Header
 - `src/proxy.ts` — auth-gate for all routes except `/login` (Next.js 16 middleware replacement)
 - `src/app/(app)/layout.tsx` — authenticated shell (Sidebar/Header), redirects to `/login` if no session
 - `src/app/login/page.tsx` — sign-in
