@@ -206,6 +206,17 @@ Migration `supabase/migrations/0017_stock_allocation.sql` + `0018_allocation_rea
 - UI: `/allocation` — pick an open SO line, method select, qty, manual lot picker (only appears for MANUAL, sourced from Phase 11's `get_fg_stock()`), expandable per-line allocation list with Release. `/sales-orders` updated with a required Site field.
 - Build + typecheck + lint pass — **lint caught a real bug** (`delete allocations[key]` mutating React state directly instead of going through `setAllocations`) before it shipped; fixed to use an immutable update. Dev server starts clean, no runtime errors on either route. **UI not yet verified in browser with a real session.**
 
+## Phase 14 — Picking: สถานะ **บางส่วน (DB เสร็จ+verified, UI ยังไม่ได้ทดสอบในเบราว์เซอร์)**
+
+Done:
+- Migration `supabase/migrations/0019_picking.sql`: `pickings` (picking_no via existing `picking` doc_type), `picking_lines` (references an `allocations` row 1:1). Widened `allocations.status` with `PICKED`.
+- **`confirm_picking()` deliberately does NOT touch `stock_balance`** — per the operational workflow in section 2.1, physical stock is only actually cut at Shipping confirmation (Phase 16). Picking just advances each allocation from `ACTIVE` → `PICKED`, so it's the one stock-adjacent RPC in this system so far with **no row lock and no ledger entry**, since nothing in `stock_balance` changes.
+- The doc's pre-confirm checklist ("Part/Lot/Location/Qty เพียงพอ/QC Status=PASS/Order ถูกต้อง") maps to real checks: Part/Lot/Location/Qty come from the referenced allocation record itself (not re-typed, so can't drift); **QC Status=PASS is satisfied by construction** — allocations can only ever reference FG-zone stock, which Phase 11's trigger already guarantees is PASS-only; "Order ถูกต้อง" = the SO must be `OPEN` and every allocation must actually belong to it, both checked explicitly.
+- `get_picking_queue()` — same `SECURITY DEFINER` + `has_permission('picking', 'view')` pattern as earlier read functions.
+- Verified against the real dev DB with a full PO→Receiving→IQC→WIP Request→FG Inspection→Sales Order→Allocation→Picking chain: confirmed picking correctly generates `PK-2026-00001`, flips the allocation to `PICKED`, and — the key check — **leaves `stock_balance.qty` and `reserved_qty` completely unchanged** (still 40/40, exactly as before picking). Confirmed WAREHOUSE role (no `create` permission by default) blocked from confirming, ADMIN confirm works, picking the same allocation twice rejected. RLS confirmed enabled. All test data cleaned up after.
+- UI: `/picking` — SO's grouped by pending allocations, a scan-to-confirm input per SO group (matches scanned Lot No. against the expected line, checks it off), Confirm Picking only enabled once every line in the group is scanned, picking history.
+- Build + typecheck + lint pass, dev server starts clean, no runtime errors on the route. **UI not yet verified in browser with a real session — scanning specifically remains unverified with real hardware, same caveat as Phase 6.**
+
 ## Key files
 
 - `supabase/migrations/0001_document_numbering.sql` — document numbering
@@ -243,6 +254,8 @@ Migration `supabase/migrations/0017_stock_allocation.sql` + `0018_allocation_rea
 - `src/types/sales-order.ts`, `src/app/(app)/sales-orders/` — Sales Orders page (now requires Site)
 - `supabase/migrations/0017_stock_allocation.sql`, `0018_allocation_reads.sql` — shelf_life_days/expiry_date, sales_orders.site_id, allocations, allocate_stock(), release_allocation(), get_open_so_lines()
 - `src/types/allocation.ts`, `src/app/(app)/allocation/` — Stock Allocation page
+- `supabase/migrations/0019_picking.sql` — pickings, picking_lines, confirm_picking(), get_picking_queue()
+- `src/types/picking.ts`, `src/app/(app)/picking/` — Picking page
 - `src/proxy.ts` — auth-gate for all routes except `/login` (Next.js 16 middleware replacement)
 - `src/app/(app)/layout.tsx` — authenticated shell (Sidebar/Header), redirects to `/login` if no session
 - `src/app/login/page.tsx` — sign-in
