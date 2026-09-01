@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useState } from "react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import type { LotTraceability, WipStockRow } from "@/types/wip-stock";
 
@@ -34,12 +35,13 @@ export function WipStockTable({ rows }: { rows: WipStockRow[] }) {
             <th className="px-3 py-2 font-medium">IQC No.</th>
             <th className="px-3 py-2 font-medium">IQC Date</th>
             <th className="px-3 py-2 font-medium">Status</th>
+            <th className="px-3 py-2 font-medium"></th>
           </tr>
         </thead>
         <tbody>
           {rows.length === 0 && (
             <tr>
-              <td colSpan={7} className="px-3 py-4 text-black/50 dark:text-white/50">
+              <td colSpan={8} className="px-3 py-4 text-black/50 dark:text-white/50">
                 ยังไม่มีสต็อกใน WIP
               </td>
             </tr>
@@ -59,10 +61,20 @@ export function WipStockTable({ rows }: { rows: WipStockRow[] }) {
                   {r.iqc_date ? new Date(r.iqc_date).toLocaleDateString("th-TH") : "—"}
                 </td>
                 <td className="px-3 py-2">PASS</td>
+                <td className="px-3 py-2">
+                  <Link
+                    href={`/labels/print?type=LOT&id=${r.lot_id}`}
+                    target="_blank"
+                    onClick={(e) => e.stopPropagation()}
+                    className="underline text-xs"
+                  >
+                    พิมพ์ป้าย
+                  </Link>
+                </td>
               </tr>
               {expanded === r.lot_id && (
                 <tr>
-                  <td colSpan={7} className="px-3 py-3 bg-black/[.02] dark:bg-white/[.03]">
+                  <td colSpan={8} className="px-3 py-3 bg-black/[.02] dark:bg-white/[.03]">
                     {!trace[r.lot_id] && (
                       <span className="text-xs text-black/50 dark:text-white/50">กำลังโหลด...</span>
                     )}

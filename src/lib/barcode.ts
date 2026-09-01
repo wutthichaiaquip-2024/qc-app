@@ -4,12 +4,19 @@
 // from a scanned payload for business logic — always re-query by id.
 export type BarcodePayload = {
   v: 1;
-  type: "ITEM" | "LOT" | "LOCATION" | "PURCHASE_ORDER" | "SHIPMENT";
+  type: "ITEM" | "LOT" | "LOCATION" | "PURCHASE_ORDER" | "SHIPMENT" | "SHIPMENT_BOX";
   id: string;
   code: string;
   part_no?: string;
   site?: string;
 };
+
+// Serializer side of the same versioned payload — used when printing a
+// label's QR code. Deliberately the mirror image of parseBarcodePayload:
+// only id/code/part_no/site ever go in, never qty/status.
+export function buildBarcodePayload(payload: BarcodePayload): string {
+  return JSON.stringify(payload);
+}
 
 export function parseBarcodePayload(raw: string): BarcodePayload | null {
   try {

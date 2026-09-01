@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import type { UserProfile } from "@/types/auth";
-import type { Shipment, ShippingQueueItem } from "@/types/shipping";
+import type { Shipment, ShipmentBox, ShippingQueueItem } from "@/types/shipping";
 import { ShippingManager } from "./ShippingManager";
 
 export default async function ShippingPage() {
@@ -32,6 +32,17 @@ export default async function ShippingPage() {
       .returns<Shipment[]>(),
   ]);
 
+  const shipmentIds = (shipmentsRes.data ?? []).map((s) => s.id);
+  const boxesRes =
+    shipmentIds.length > 0
+      ? await supabase
+          .from("shipment_boxes")
+          .select("id, shipment_id, box_no")
+          .in("shipment_id", shipmentIds)
+          .order("box_no")
+          .returns<ShipmentBox[]>()
+      : { data: [] as ShipmentBox[] };
+
   return (
     <div className="flex flex-col gap-4">
       <div>
@@ -44,6 +55,7 @@ export default async function ShippingPage() {
       <ShippingManager
         queue={(queueRes.data ?? []) as ShippingQueueItem[]}
         initialShipments={shipmentsRes.data ?? []}
+        boxes={boxesRes.data ?? []}
         canCreate={perm?.can_create ?? false}
       />
     </div>

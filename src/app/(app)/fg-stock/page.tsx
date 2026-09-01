@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import type { FgStockRow } from "@/types/fg-stock";
 
@@ -29,12 +30,13 @@ export default async function FgStockPage() {
               <th className="px-3 py-2 font-medium">Inspection No.</th>
               <th className="px-3 py-2 font-medium">Inspection Date</th>
               <th className="px-3 py-2 font-medium">QC Status</th>
+              <th className="px-3 py-2 font-medium"></th>
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 && (
               <tr>
-                <td colSpan={9} className="px-3 py-4 text-black/50 dark:text-white/50">
+                <td colSpan={10} className="px-3 py-4 text-black/50 dark:text-white/50">
                   ยังไม่มีสต็อกใน FG
                 </td>
               </tr>
@@ -52,6 +54,11 @@ export default async function FgStockPage() {
                   {r.inspected_at ? new Date(r.inspected_at).toLocaleDateString("th-TH") : "—"}
                 </td>
                 <td className="px-3 py-2">PASS</td>
+                <td className="px-3 py-2">
+                  <Link href={`/labels/print?type=LOT&id=${r.lot_id}`} target="_blank" className="underline text-xs">
+                    พิมพ์ป้าย
+                  </Link>
+                </td>
               </tr>
             ))}
           </tbody>

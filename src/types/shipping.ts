@@ -18,3 +18,9 @@ export type Shipment = {
   so_id: string;
   shipped_at: string;
 };
+
+export type ShipmentBox = {
+  id: string;
+  shipment_id: string;
+  box_no: number;
+};

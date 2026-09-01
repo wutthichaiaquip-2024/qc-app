@@ -1,20 +1,24 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import type { Shipment, ShippingQueueItem } from "@/types/shipping";
+import type { Shipment, ShipmentBox, ShippingQueueItem } from "@/types/shipping";
 
 export function ShippingManager({
   queue,
   initialShipments,
+  boxes,
   canCreate,
 }: {
   queue: ShippingQueueItem[];
   initialShipments: Shipment[];
+  boxes: ShipmentBox[];
   canCreate: boolean;
 }) {
   const [items, setItems] = useState(queue);
   const [shipments, setShipments] = useState(initialShipments);
+  const [shipmentBoxes, setShipmentBoxes] = useState(boxes);
   const [boxNos, setBoxNos] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -64,7 +68,16 @@ export function ShippingManager({
       .eq("id", data)
       .single<Shipment>();
 
-    if (shipment) setShipments((prev) => [shipment, ...prev]);
+    if (shipment) {
+      setShipments((prev) => [shipment, ...prev]);
+      const { data: newBoxes } = await supabase
+        .from("shipment_boxes")
+        .select("id, shipment_id, box_no")
+        .eq("shipment_id", shipment.id)
+        .order("box_no")
+        .returns<ShipmentBox[]>();
+      if (newBoxes) setShipmentBoxes((prev) => [...prev, ...newBoxes]);
+    }
     setItems((prev) => prev.filter((i) => i.so_id !== soId));
   }
 
@@ -139,12 +152,13 @@ export function ShippingManager({
               <tr className="border-b border-black/10 dark:border-white/10 text-left text-black/50 dark:text-white/50">
                 <th className="px-3 py-2 font-medium">Shipment No.</th>
                 <th className="px-3 py-2 font-medium">Shipped At</th>
+                <th className="px-3 py-2 font-medium">กล่อง / ป้าย</th>
               </tr>
             </thead>
             <tbody>
               {shipments.length === 0 && (
                 <tr>
-                  <td colSpan={2} className="px-3 py-4 text-black/50 dark:text-white/50">
+                  <td colSpan={3} className="px-3 py-4 text-black/50 dark:text-white/50">
                     ยังไม่มีการส่งของ
                   </td>
                 </tr>
@@ -153,6 +167,22 @@ export function ShippingManager({
                 <tr key={s.id} className="border-b border-black/5 dark:border-white/5 last:border-0">
                   <td className="px-3 py-2">{s.shipment_no}</td>
                   <td className="px-3 py-2">{new Date(s.shipped_at).toLocaleString("th-TH")}</td>
+                  <td className="px-3 py-2">
+                    <div className="flex flex-wrap gap-2">
+                      {shipmentBoxes
+                        .filter((b) => b.shipment_id === s.id)
+                        .map((b) => (
+                          <Link
+                            key={b.id}
+                            href={`/labels/print?type=SHIPMENT_BOX&id=${b.id}`}
+                            target="_blank"
+                            className="underline text-xs"
+                          >
+                            Box {b.box_no}
+                          </Link>
+                        ))}
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>

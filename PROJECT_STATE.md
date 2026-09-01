@@ -295,6 +295,21 @@ Done:
 - UI: `/reports` — 5-tab layout (Stock/QC/Supplier Quality/Forecast/Traceability) with an inline data-table preview (date-range filter for QC/Supplier Quality, Lot No. for Traceability — full genealogy browsing stays on the existing `/traceability` page, linked from here), Export CSV/PDF buttons that call `create_report_job()`, and a polled (`get_my_report_jobs()`, every 4s) export-history table with status and a download link once `DONE`.
 - Build + typecheck + lint pass, dev server starts clean, no runtime errors on the (pre-auth) route. **UI not yet verified in browser with a real session** (same standing caveat as every phase since Phase 2 — no login credentials in this environment) — but unlike prior phases, the DB+Storage+Edge-Function path behind this UI is fully, genuinely exercised end-to-end above, not just built.
 
+## Phase 22 — Barcode / QR (extension): สถานะ **เสร็จ (verified against real DB, UI ยังไม่ได้ทดสอบในเบราว์เซอร์)**
+
+Extends Phase 6/14's scanning work to label *printing*: FG Lot, WIP Lot, Location, Shipment/Box. The QR payload format itself is unchanged (still the versioned JSON from `src/lib/barcode.ts` — `{v, type, id, code, part_no, site}`, decided in Phase 0/2) — this phase only adds a way to render it as a printable label.
+
+Done:
+- Migration `supabase/migrations/0028_labels.sql`: `get_label_data(type, id)` — one function covering all 3 label types (`LOT` covers both WIP and FG lots, since Phase 17 established they're one identity), each gated by the single most relevant module permission rather than the underlying tables' own permissions (`LOT` → any of `wip_stock`/`fg_stock`/`traceability` view, since it's reachable from all three; `LOCATION` → `master_data`; `SHIPMENT_BOX` → `shipping`) — same "one gate" reasoning Phase 8 documented for `get_wip_stock()`.
+- `src/lib/barcode.ts` gets `buildBarcodePayload()` (the serializer half of the existing `parseBarcodePayload()`) and a widened `type` union (`+ "SHIPMENT_BOX"`).
+- Added the `qrcode` npm package (MIT, actively maintained, 0 vulnerabilities per `npm audit`) for QR rendering — generates a PNG data URI server-side via `QRCode.toDataURL()`, no client-side JS or canvas needed.
+- `/labels/print?type=LOT|LOCATION|SHIPMENT_BOX&id=...` — a top-level route deliberately **outside** the `(app)` route group (no Sidebar/Header chrome) so the page is print-clean, but still auth-gated: `src/proxy.ts`'s matcher covers essentially every path, and the actual redirect check in `src/lib/supabase/middleware.ts` is a plain `!user && !isPublicPath` — not scoped to any route group, so this route is exactly as protected as everything under `(app)`. `@page { size: 100mm 60mm }` print CSS, "พิมพ์ป้าย" button hidden via Tailwind's `print:hidden` when actually printing.
+- Entry points added where each label type is actually used: WIP Stock table (per-lot row), FG Stock table (per-lot row), Master Data → Location tab (`EntityManager` gained an optional `printLabelType` prop — plain string, not a function, matching the existing "Server Components can't pass functions to Client Components" constraint noted in that file), Shipping page's Shipment History (per-box, fetched via a direct `shipment_boxes` query — already had its own RLS policy from Phase 16, no new function needed there).
+- Verified against the real dev DB: built a full temporary chain (site/location/item/lot/customer/SO/shipment/box), called `get_label_data()` for all 3 types — each returned exactly the expected fields. Confirmed the permission gate: `LOCATION` rejected with `master_data.view` off, restored; `LOT`'s OR-across-three-permissions logic rejected when `wip_stock`+`fg_stock`+`traceability` were all off together, then passed again with only `traceability` re-enabled (confirming it's a real OR, not silently defaulting to the first check). Verified `qrcode` actually produces a valid `data:image/png;base64,...` URI from the same payload shape the print page builds. All test data and its audit_log entries cleaned up after (verified back to 0).
+- Build + typecheck + lint pass, dev server starts clean, no runtime errors on `/labels/print` (pre-auth redirect, same as every route). **UI not yet verified in browser with a real session** (same standing caveat as every phase since Phase 2) — the DB/permission/QR-generation logic behind it is genuinely exercised above, not just written.
+
+Known gaps: real label-printer hardware (thermal/label printer driver behavior, exact physical label stock dimensions) is unverified — the print CSS targets a generic 100mm×60mm size as a reasonable default, but real label stock varies and should be confirmed against whatever printer AQUIP actually uses.
+
 ## Key files
 
 - `supabase/migrations/0001_document_numbering.sql` — document numbering
@@ -351,6 +366,8 @@ Done:
 - `supabase/migrations/0027_reports.sql` — get_stock_report(), get_qc_report(), get_supplier_quality_report(), report_jobs, create_report_job(), get_my_report_jobs(), get_report_export_data(), report-exports bucket, pg_net + pg_cron job
 - `supabase/functions/process-report-jobs/index.ts` — CSV/PDF export worker, real, deployed, tested
 - `src/types/reports.ts`, `src/app/(app)/reports/` — Reports page (5 report types + export jobs)
+- `supabase/migrations/0028_labels.sql` — get_label_data() for LOT/LOCATION/SHIPMENT_BOX
+- `src/types/labels.ts`, `src/app/labels/print/` — label print page (top-level route, outside (app) group, still auth-gated)
 - `src/proxy.ts` — auth-gate for all routes except `/login` (Next.js 16 middleware replacement)
 - `src/app/(app)/layout.tsx` — authenticated shell (Sidebar/Header), redirects to `/login` if no session
 - `src/app/login/page.tsx` — sign-in

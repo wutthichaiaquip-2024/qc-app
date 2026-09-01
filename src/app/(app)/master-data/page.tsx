@@ -190,6 +190,7 @@ export default async function MasterDataPage() {
                 table="locations"
                 editable={editable}
                 emptyLabel="ยังไม่มีข้อมูล location"
+                printLabelType="LOCATION"
                 columns={[
                   { key: "site_id", label: "Site" },
                   { key: "code", label: "Code" },

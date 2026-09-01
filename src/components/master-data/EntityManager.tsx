@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { FieldInput, type FieldDef } from "./Field";
 
@@ -12,6 +13,7 @@ export function EntityManager<T extends Record<string, unknown>>({
   editable,
   emptyLabel,
   cellLabelMaps,
+  printLabelType,
 }: {
   table: string;
   fields: FieldDef[];
@@ -21,6 +23,8 @@ export function EntityManager<T extends Record<string, unknown>>({
   emptyLabel: string;
   /** Per-column lookup: raw value -> display label (e.g. a FK id -> code). Plain data, not a function — Server Components can't pass functions to Client Components. */
   cellLabelMaps?: Record<string, Record<string, string>>;
+  /** When set, adds a "พิมพ์ป้าย" link per row to /labels/print (Phase 22) — row.id is used as the label target's id. */
+  printLabelType?: "LOCATION";
 }) {
   const [rows, setRows] = useState(initialRows);
   const [form, setForm] = useState<Record<string, string>>({});
@@ -68,12 +72,13 @@ export function EntityManager<T extends Record<string, unknown>>({
                   {c.label}
                 </th>
               ))}
+              {printLabelType && <th className="px-3 py-2 font-medium whitespace-nowrap"></th>}
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 && (
               <tr>
-                <td colSpan={columns.length} className="px-3 py-4 text-black/50 dark:text-white/50">
+                <td colSpan={columns.length + (printLabelType ? 1 : 0)} className="px-3 py-4 text-black/50 dark:text-white/50">
                   {emptyLabel}
                 </td>
               </tr>
@@ -89,6 +94,17 @@ export function EntityManager<T extends Record<string, unknown>>({
                     </td>
                   );
                 })}
+                {printLabelType && (
+                  <td className="px-3 py-2 whitespace-nowrap">
+                    <Link
+                      href={`/labels/print?type=${printLabelType}&id=${row.id}`}
+                      target="_blank"
+                      className="underline text-xs"
+                    >
+                      พิมพ์ป้าย
+                    </Link>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
