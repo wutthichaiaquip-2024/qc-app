@@ -126,6 +126,19 @@ Known gaps:
 - `stock_transactions.txn_type` check constraint will need a migration each time a new movement type is added (IQC split in Phase 7, WIP request in Phase 9, etc.) — expected, not a bug.
 - No barcode label printing yet (Phase 22).
 
+## Phase 7 — Incoming QC (IQC): สถานะ **บางส่วน (DB เสร็จ+verified, UI ยังไม่ได้ทดสอบในเบราว์เซอร์)**
+
+Done:
+- Migration `supabase/migrations/0011_incoming_qc.sql`: `defect_codes` (left EMPTY, same reasoning as the AQL table — company's own taxonomy, managed via UI, not invented by me), `iqc_inspections` (snapshots the resolved plan's sample_size/accept_no/reject_no at inspection time, per Versioned Spec), `iqc_defects` (Defect Code + Condition Note text area). Widened `stock_transactions.txn_type` to add `IQC_OUT`/`IQC_PASS`/`IQC_HOLD`/`IQC_NG`.
+- `confirm_iqc_inspection()` RPC: locks the source INCOMING `stock_balance` row (`FOR UPDATE`), calls Phase 2's `get_sample_size_plan()` to resolve/snapshot the plan, validates `qty_pass+qty_hold+qty_ng` doesn't exceed what's actually there, validates each target location's `zone_type` matches (WIP for pass, HOLD for hold, NG for ng) at the DB level, then moves stock in one transaction — this is the **first real use of the Phase 2 sample-size infrastructure**.
+- Verified against the real dev DB end-to-end, including the case with **no inspection plan configured** (gracefully records `sample_size=null`, inspection still proceeds) and the case **with** a real plan+AQL entry (correctly resolved code letter F for lot_size=100/level II, sample_size=20/Ac=1/Re=2, matching Phase 2's already-verified lookup). Split-lot test (200 pcs → 180 pass/15 hold/5 ng) landed exactly right across 4 locations with 4 correctly-signed ledger entries. Guards tested: inspecting an already-fully-disposed lot rejected, wrong-zone target location rejected. All test data cleaned up after.
+- UI: `/iqc` — pick a pending lot (anything with balance in an INCOMING location), live sample-size preview via `get_sample_size_plan()`, split-lot qty + per-status location entry, dynamic defect rows, inspection history. Defect Codes management reuses the `EntityManager` component from Phase 2.
+- Build + typecheck + lint pass, dev server starts clean, no runtime errors on the route. **UI not yet verified in browser with a real session.**
+
+Known gaps:
+- `defect_codes` is empty — QC needs to populate it (same follow-up as the AQL table from Phase 2).
+- No photo attachment on IQC defects (doc's Phase 7 bullet only asks for Defect Code + Condition Note; photos are explicitly a Phase 10 FG Inspection thing).
+
 ## Key files
 
 - `supabase/migrations/0001_document_numbering.sql` — document numbering
@@ -149,6 +162,8 @@ Known gaps:
 - `src/lib/barcode.ts` — QR payload type + parser (shared across all future scanning UI)
 - `src/components/ScanInput.tsx` — reusable keyboard-wedge scanner input (shared across all future scanning UI)
 - `src/types/receiving.ts`, `src/app/(app)/receiving/` — Receiving page
+- `supabase/migrations/0011_incoming_qc.sql` — defect_codes, iqc_inspections, iqc_defects, confirm_iqc_inspection(), widened stock_transactions.txn_type
+- `src/types/iqc.ts`, `src/app/(app)/iqc/` — IQC page (split-lot inspection + defect code management)
 - `src/proxy.ts` — auth-gate for all routes except `/login` (Next.js 16 middleware replacement)
 - `src/app/(app)/layout.tsx` — authenticated shell (Sidebar/Header), redirects to `/login` if no session
 - `src/app/login/page.tsx` — sign-in
