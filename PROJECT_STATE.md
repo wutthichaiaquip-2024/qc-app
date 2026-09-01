@@ -181,6 +181,15 @@ Done:
 - UI: `/fg-stock` — table matching the doc's exact column list (Part No., FG Lot, Qty, Location, Inspection No./Date, QC Status, Available Qty, Reserved Qty).
 - Build + typecheck + lint pass, dev server starts clean, no runtime errors on the route. **UI not yet verified in browser with a real session.**
 
+## Phase 12 — Customer Order: สถานะ **บางส่วน (DB เสร็จ+verified, UI ยังไม่ได้ทดสอบในเบราว์เซอร์)**
+
+Done:
+- Migration `supabase/migrations/0016_customer_order.sql`: `sales_orders` (so_no via existing `sales_order` doc_type; **no price/value fields** per the scope decision confirmed before Phase 0), `sales_order_lines` (Part/Qty/Delivery Date). `create_sales_order()` — atomic header+lines. `cancel_sales_order()` (OPEN→CANCELLED).
+- `get_fg_free_stock(item_id)` — **live** query (`sum(qty - reserved_qty)` across FG-zone stock, not cached), used during order entry as a real-time decision aid, deliberately different from Phase 4's hourly-cron pattern since this is a point-in-time check for the person taking the order, not a dashboard.
+- Verified against the real dev DB: set up FG stock with qty=100/reserved=30, confirmed `get_fg_free_stock()` correctly returns 70; created SO-2026-00001 with a line; confirmed SALES role (no `reject` permission by default) blocked from cancelling; confirmed ADMIN cancel works; RLS confirmed enabled on both tables. All test data cleaned up after.
+- UI: `/sales-orders` — dynamic multi-line order form with a **live Free Stock indicator per line** (turns red if requested qty exceeds free stock — informational only, doesn't block order creation, matching real-world backorder practice since the doc doesn't ask for a hard block), order list with expandable line detail and Cancel action.
+- Build + typecheck + lint pass, dev server starts clean, no runtime errors on the route. **UI not yet verified in browser with a real session.**
+
 ## Key files
 
 - `supabase/migrations/0001_document_numbering.sql` — document numbering
@@ -214,6 +223,8 @@ Done:
 - `src/types/fg-inspection.ts`, `src/app/(app)/fg-inspection/` — FG Inspection page + Work Instruction/Packing Std lookup
 - `supabase/migrations/0015_fg_stock.sql` — reserved_qty on stock_balance, enforce_fg_stock_origin() trigger, get_fg_stock()
 - `src/types/fg-stock.ts`, `src/app/(app)/fg-stock/` — FG Stock page
+- `supabase/migrations/0016_customer_order.sql` — sales_orders, sales_order_lines, create_sales_order(), cancel_sales_order(), get_fg_free_stock()
+- `src/types/sales-order.ts`, `src/app/(app)/sales-orders/` — Sales Orders page
 - `src/proxy.ts` — auth-gate for all routes except `/login` (Next.js 16 middleware replacement)
 - `src/app/(app)/layout.tsx` — authenticated shell (Sidebar/Header), redirects to `/login` if no session
 - `src/app/login/page.tsx` — sign-in
