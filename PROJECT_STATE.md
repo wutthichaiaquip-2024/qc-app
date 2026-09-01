@@ -249,6 +249,15 @@ Two things this phase actually needed, plus a completeness check on what Phase 6
 - UI: `/traceability` — scan/type a Lot No., renders the full chain as a stage-by-stage timeline (Supplier → PO → Receiving → IQC → WIP Request → FG Inspection → ... → SO → Picking → OQC → Shipment → Customer), reusing Phase 6's `ScanInput`/barcode-payload parsing.
 - Build + typecheck + lint pass, dev server starts clean, no runtime errors on the route. **UI not yet verified in browser with a real session.**
 
+## Phase 18 — Dashboard: สถานะ **บางส่วน (DB เสร็จ+verified, UI ยังไม่ได้ทดสอบในเบราว์เซอร์)**
+
+Done:
+- Migration `supabase/migrations/0024_dashboard.sql`: 4 materialized views (`mv_management_dashboard`, `mv_planning_dashboard`, `mv_warehouse_dashboard`, `mv_qc_dashboard`) computing aggregates directly from base tables, `refresh_dashboards()`, hourly `pg_cron` job (matching Phase 4's cadence).
+- **Materialized views can't have RLS in Postgres, and their `REFRESH` runs with no request/JWT context** (a `has_permission()` check baked into the view query would always evaluate false during refresh, silently producing empty results) — so each view is computed unconditionally, `REVOKE ALL` from `authenticated`/`anon`/`public` (confirmed via `has_table_privilege()` — returns `false`), and exposed only through a `SECURITY DEFINER` wrapper function (`get_management_dashboard()` etc.) gated by `has_permission('dashboard', 'view')`, the same pattern as every queue-reading function since Phase 8.
+- Verified against the real dev DB: created a test PO with `unit_price` set, confirmed `mv_management_dashboard.open_po_value` computed exactly right (100 × 25.50 = 2550.00) and `open_po_count` = 1; confirmed rates (`iqc_pass_rate_30d`, `oqc_pass_rate_30d`) correctly return `null` rather than erroring on division-by-zero when there's no data in the window; confirmed the permission gate (temporarily disabled WAREHOUSE's `dashboard.view`, got 0 rows, restored default); confirmed direct `SELECT` on a materialized view is genuinely blocked for `authenticated`. All test data cleaned up after.
+- UI: filled in the Phase 0 dashboard shell at `/` (the app's home route) with 4 sections — Management, Planning, Warehouse, QC — each rendering its dashboard's stats, with a "last refreshed" timestamp.
+- Build + typecheck + lint pass, dev server starts clean, no runtime errors. **UI not yet verified in browser with a real session.**
+
 ## Key files
 
 - `supabase/migrations/0001_document_numbering.sql` — document numbering
@@ -295,6 +304,8 @@ Two things this phase actually needed, plus a completeness check on what Phase 6
 - `supabase/migrations/0022_traceability.sql` — append-only trigger, get_lot_genealogy()
 - `supabase/migrations/0023_traceability_lookup.sql` — find_lot_by_no()
 - `src/types/traceability.ts`, `src/app/(app)/traceability/` — Traceability page
+- `supabase/migrations/0024_dashboard.sql` — 4 materialized views, refresh_dashboards(), get_*_dashboard() wrapper functions, hourly pg_cron job
+- `src/types/dashboard.ts`, `src/app/(app)/page.tsx` — Dashboard (home route)
 - `src/proxy.ts` — auth-gate for all routes except `/login` (Next.js 16 middleware replacement)
 - `src/app/(app)/layout.tsx` — authenticated shell (Sidebar/Header), redirects to `/login` if no session
 - `src/app/login/page.tsx` — sign-in
