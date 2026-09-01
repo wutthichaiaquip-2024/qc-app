@@ -3,7 +3,7 @@
 import { Fragment, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { SalesOrder, SalesOrderLine } from "@/types/sales-order";
-import type { Customer, Item } from "@/types/master-data";
+import type { Customer, Item, Site } from "@/types/master-data";
 
 type LineDraft = { item_id: string; qty: string; delivery_date: string; freeStock: number | null };
 
@@ -13,15 +13,18 @@ export function SalesOrderManager({
   initialOrders,
   customers,
   items,
+  sites,
   canCreate,
 }: {
   initialOrders: SalesOrder[];
   customers: Customer[];
   items: Item[];
+  sites: Site[];
   canCreate: boolean;
 }) {
   const [orders, setOrders] = useState(initialOrders);
   const [customerId, setCustomerId] = useState("");
+  const [siteId, setSiteId] = useState("");
   const [orderDate, setOrderDate] = useState(new Date().toISOString().slice(0, 10));
   const [requiredDate, setRequiredDate] = useState("");
   const [lines, setLines] = useState<LineDraft[]>([{ ...emptyLine }]);
@@ -59,8 +62,8 @@ export function SalesOrderManager({
         delivery_date: l.delivery_date || null,
       }));
 
-    if (!customerId || payloadLines.length === 0) {
-      setError("ต้องเลือก Customer และมีอย่างน้อย 1 line");
+    if (!customerId || !siteId || payloadLines.length === 0) {
+      setError("ต้องเลือก Customer, Site และมีอย่างน้อย 1 line");
       setSubmitting(false);
       return;
     }
@@ -70,6 +73,7 @@ export function SalesOrderManager({
       p_customer_id: customerId,
       p_order_date: orderDate,
       p_required_date: requiredDate || null,
+      p_site_id: siteId,
       p_lines: payloadLines,
     });
 
@@ -82,12 +86,13 @@ export function SalesOrderManager({
 
     const { data: so } = await supabase
       .from("sales_orders")
-      .select("id, so_no, customer_id, order_date, required_date, status, created_at")
+      .select("id, so_no, customer_id, order_date, required_date, site_id, status, created_at")
       .eq("id", data)
       .single<SalesOrder>();
 
     if (so) setOrders((prev) => [so, ...prev]);
     setCustomerId("");
+    setSiteId("");
     setRequiredDate("");
     setLines([{ ...emptyLine }]);
   }
@@ -137,6 +142,21 @@ export function SalesOrderManager({
                 {customers.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.code} — {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-black/50 dark:text-white/50">Site (คลังที่จะส่งของ)</label>
+              <select
+                value={siteId}
+                onChange={(e) => setSiteId(e.target.value)}
+                className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm"
+              >
+                <option value="">—</option>
+                {sites.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.code}
                   </option>
                 ))}
               </select>

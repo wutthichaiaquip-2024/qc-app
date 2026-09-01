@@ -6,6 +6,7 @@ export type SalesOrder = {
   customer_id: string;
   order_date: string;
   required_date: string | null;
+  site_id: string | null;
   status: SalesOrderStatus;
   created_at: string;
 };

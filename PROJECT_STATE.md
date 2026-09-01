@@ -190,6 +190,22 @@ Done:
 - UI: `/sales-orders` — dynamic multi-line order form with a **live Free Stock indicator per line** (turns red if requested qty exceeds free stock — informational only, doesn't block order creation, matching real-world backorder practice since the doc doesn't ask for a hard block), order list with expandable line detail and Cancel action.
 - Build + typecheck + lint pass, dev server starts clean, no runtime errors on the route. **UI not yet verified in browser with a real session.**
 
+## Phase 13 — Stock Allocation: สถานะ **บางส่วน (DB เสร็จ+verified, UI ยังไม่ได้ทดสอบในเบราว์เซอร์)**
+
+Done — this phase required retrofitting two real gaps in earlier phases (not scope creep, just things that couldn't be known were needed until Allocation actually required them):
+
+1. **FEFO needs an expiry date, and there was nowhere to set one.** Added `items.shelf_life_days` (Master Data field) and `lots.expiry_date`; `confirm_fg_inspection()` (Phase 10) now computes the new FG lot's `expiry_date = today + shelf_life_days` automatically — no manual "enter expiry" step needed.
+2. **Allocation needs to know which site's FG stock to draw from, but `sales_orders` never got a site.** Added `sales_orders.site_id`; `create_sales_order()` (Phase 12) now requires it. Sales Order UI updated to require a Site selection.
+
+Migration `supabase/migrations/0017_stock_allocation.sql` + `0018_allocation_reads.sql`:
+- `allocations` table (so_line_id, lot_id, location_id, qty, method, status ACTIVE/RELEASED).
+- `allocate_stock(so_line_id, method, qty, manual_lot_id?, manual_location_id?)` — **FIFO/FEFO auto-select using a window function to compute priority order (oldest-created for FIFO, earliest-expiry for FEFO) and split across multiple lots if one isn't enough, then lock + apply that specific candidate set in a fixed `lot_id` order** — this is the lock-ordering discipline section 3 requires when one operation must lock multiple `stock_balance` rows, done as two passes (pick candidates unlocked → lock+apply in `lot_id` order) rather than locking in priority order (which would risk deadlocks against concurrent allocations touching an overlapping lot set). MANUAL path locks the single specified row directly. Every path validates the target is `zone_type = FG` — "Allocate เฉพาะ FG ที่ PASS เท่านั้น" is enforced by construction (FG-zone stock can only exist via FG_PASS per Phase 11's trigger) plus this explicit zone check.
+- `release_allocation()` restores `reserved_qty`. `cancel_sales_order()` (Phase 12) re-created to also release any ACTIVE allocations on the order's lines — otherwise cancelling would leave stock reserved forever with nothing to fulfill it.
+- `get_open_so_lines()` — same `SECURITY DEFINER` + `has_permission('allocation', 'view')` pattern as Phase 8/11, computes remaining unallocated qty per line.
+- **Verified thoroughly against the real dev DB**, including a scenario specifically designed to prove FEFO and FIFO give genuinely different answers (not just two names for the same sort): built 2 FG lots — Lot A (30 pcs, created first, expiry set later) and Lot B (20 pcs, created second, expiry set **earlier**). FIFO on a 40-pc request took all 30 from Lot A (oldest) + 10 from Lot B. After releasing and re-running as FEFO on the same request: took all 20 from Lot B (earliest expiry, despite being the *younger* lot) + 20 from Lot A — confirming FEFO genuinely orders by expiry, not creation time. Also verified: over-allocation beyond a line's remaining qty rejected, role without `approve`/`delete` blocked appropriately, `release_allocation()` correctly restores `reserved_qty` to 0, cancelling a sales order correctly releases all its active allocations. RLS confirmed enabled. All test data cleaned up after.
+- UI: `/allocation` — pick an open SO line, method select, qty, manual lot picker (only appears for MANUAL, sourced from Phase 11's `get_fg_stock()`), expandable per-line allocation list with Release. `/sales-orders` updated with a required Site field.
+- Build + typecheck + lint pass — **lint caught a real bug** (`delete allocations[key]` mutating React state directly instead of going through `setAllocations`) before it shipped; fixed to use an immutable update. Dev server starts clean, no runtime errors on either route. **UI not yet verified in browser with a real session.**
+
 ## Key files
 
 - `supabase/migrations/0001_document_numbering.sql` — document numbering
@@ -224,7 +240,9 @@ Done:
 - `supabase/migrations/0015_fg_stock.sql` — reserved_qty on stock_balance, enforce_fg_stock_origin() trigger, get_fg_stock()
 - `src/types/fg-stock.ts`, `src/app/(app)/fg-stock/` — FG Stock page
 - `supabase/migrations/0016_customer_order.sql` — sales_orders, sales_order_lines, create_sales_order(), cancel_sales_order(), get_fg_free_stock()
-- `src/types/sales-order.ts`, `src/app/(app)/sales-orders/` — Sales Orders page
+- `src/types/sales-order.ts`, `src/app/(app)/sales-orders/` — Sales Orders page (now requires Site)
+- `supabase/migrations/0017_stock_allocation.sql`, `0018_allocation_reads.sql` — shelf_life_days/expiry_date, sales_orders.site_id, allocations, allocate_stock(), release_allocation(), get_open_so_lines()
+- `src/types/allocation.ts`, `src/app/(app)/allocation/` — Stock Allocation page
 - `src/proxy.ts` — auth-gate for all routes except `/login` (Next.js 16 middleware replacement)
 - `src/app/(app)/layout.tsx` — authenticated shell (Sidebar/Header), redirects to `/login` if no session
 - `src/app/login/page.tsx` — sign-in
