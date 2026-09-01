@@ -27,7 +27,7 @@ export default async function PurchaseOrdersPage() {
   const [orders, suppliers, items] = await Promise.all([
     supabase
       .from("purchase_orders")
-      .select("id, po_no, supplier_id, po_date, currency, delivery_date, status, created_at")
+      .select("id, po_no, supplier_id, po_date, currency, delivery_date, status, barcode_value, created_at")
       .order("created_at", { ascending: false })
       .returns<PurchaseOrder[]>(),
     supabase.from("suppliers").select("*").order("code").returns<Supplier[]>(),

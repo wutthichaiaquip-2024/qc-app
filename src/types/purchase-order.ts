@@ -16,6 +16,7 @@ export type PurchaseOrder = {
   currency: string;
   delivery_date: string | null;
   status: PoStatus;
+  barcode_value: string | null;
   created_at: string;
 };
 

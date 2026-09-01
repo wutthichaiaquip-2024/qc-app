@@ -109,6 +109,23 @@ Known gaps:
 - No PO total value display (sum of qty × unit_price) — not in the doc's column list, can add if wanted.
 - Phase 6 will need its own way to move a PO to PARTIAL_RECEIVED/COMPLETED — likely a dedicated function Receiving calls directly, not through `update_purchase_order_status()`.
 
+## Phase 6 — Receiving: สถานะ **บางส่วน (DB เสร็จ+verified, UI ยังไม่ได้ทดสอบในเบราว์เซอร์)**
+
+First phase that touches physical stock, so this is also where the foundational stock infrastructure (`lots`, `stock_balance`, `stock_transactions`) got built — every later stock-touching phase builds on these same three tables.
+
+Done:
+- Migration `supabase/migrations/0010_receiving.sql`: `lots` (lot_no via new `lot` doc_type, prefix `LOT`), `stock_balance` (one row per lot+location — a lot's qty can later split across locations, e.g. IQC pass/hold/ng), `stock_transactions` (**append-only ledger**, no insert/update/delete policy exists for authenticated at all — only `confirm_goods_receipt()` writes it; `txn_type` check constraint currently only allows `'RECEIPT'` and will be widened, never shrunk, as later phases add movement types), `goods_receipts`/`goods_receipt_lines`.
+- `confirm_goods_receipt(po_id, lines)` RPC: header + every line's new lot + stock_balance upsert + ledger entry, all in one transaction. Enforces the receiving location's `zone_type = 'INCOMING'` at the DB level (not just trusted to the UI) and that the PO is in `CONFIRMED`/`PARTIAL_RECEIVED` status. Also rolls the PO's status forward to `PARTIAL_RECEIVED`/`COMPLETED` by comparing total received vs. ordered qty per line — this is the dedicated Phase-6-only path into those two statuses that `update_purchase_order_status()` (Phase 5) deliberately excludes.
+- Verified against the real dev DB with a full lifecycle: receiving against a DRAFT PO rejected, receiving into a WIP-zone location rejected, partial receipt (40/100) correctly rolled PO to `PARTIAL_RECEIVED` with lot `LOT-2026-00001` and a `+40 RECEIPT` ledger entry, remaining receipt (60/100) correctly rolled PO to `COMPLETED` and created a **second, independently traceable lot** `LOT-2026-00002` rather than merging into the first. RLS confirmed enabled on all 5 new tables. All test data cleaned up after.
+- **Barcode scanning implemented as a keyboard-wedge input** (`src/components/ScanInput.tsx`) rather than phone-camera scanning — this matches how real warehouse barcode scanner hardware actually works (it types the decoded value + Enter, like a keyboard), and is something I could build without needing camera/device APIs I can't test here. QR payloads are versioned JSON (`src/lib/barcode.ts`, matches the format agreed at Phase 2 — see Scope decisions), with a plain-code fallback (matching directly against `po_no`/`barcode_value`) for simpler 1D barcodes or manual typing.
+- Purchase orders got a new `barcode_value` column (nullable) so a PO can be scanned to auto-select it in Receiving — not auto-populated yet (no label-printing UI until Phase 22), so it's blank until you set one manually or Phase 22 wires it up.
+- UI: `/receiving` — scan-or-select PO, shows remaining qty per line (ordered − already received), qty + INCOMING-location entry per line, receipt history list.
+- Build + typecheck + lint pass, dev server starts clean, no runtime errors on the route. **UI not yet verified in browser with a real session**, and **scanning specifically is unverified with real hardware** — I have no physical barcode scanner or camera in this environment, only the manual-typing path is actually exercised by me.
+
+Known gaps:
+- `stock_transactions.txn_type` check constraint will need a migration each time a new movement type is added (IQC split in Phase 7, WIP request in Phase 9, etc.) — expected, not a bug.
+- No barcode label printing yet (Phase 22).
+
 ## Key files
 
 - `supabase/migrations/0001_document_numbering.sql` — document numbering
@@ -128,6 +145,10 @@ Known gaps:
 - `src/types/planning.ts`, `src/app/(app)/planning/` — Demand & Stock Planning dashboard
 - `supabase/migrations/0009_purchase_orders.sql` — purchase_orders, purchase_order_lines, purchase_order_line_attachments, po-attachments storage bucket, create_purchase_order(), update_purchase_order_status()
 - `src/types/purchase-order.ts`, `src/app/(app)/purchase-orders/` — Purchase Order page
+- `supabase/migrations/0010_receiving.sql` — lots, stock_balance, stock_transactions (append-only ledger), goods_receipts, goods_receipt_lines, confirm_goods_receipt()
+- `src/lib/barcode.ts` — QR payload type + parser (shared across all future scanning UI)
+- `src/components/ScanInput.tsx` — reusable keyboard-wedge scanner input (shared across all future scanning UI)
+- `src/types/receiving.ts`, `src/app/(app)/receiving/` — Receiving page
 - `src/proxy.ts` — auth-gate for all routes except `/login` (Next.js 16 middleware replacement)
 - `src/app/(app)/layout.tsx` — authenticated shell (Sidebar/Header), redirects to `/login` if no session
 - `src/app/login/page.tsx` — sign-in

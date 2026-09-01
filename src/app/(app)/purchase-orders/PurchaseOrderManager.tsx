@@ -103,7 +103,7 @@ export function PurchaseOrderManager({
 
     const { data: po } = await supabase
       .from("purchase_orders")
-      .select("id, po_no, supplier_id, po_date, currency, delivery_date, status, created_at")
+      .select("id, po_no, supplier_id, po_date, currency, delivery_date, status, barcode_value, created_at")
       .eq("id", data)
       .single<PurchaseOrder>();
 
