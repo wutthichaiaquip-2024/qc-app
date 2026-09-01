@@ -149,6 +149,14 @@ Done:
 - UI: `/wip-stock` — table of current WIP stock, click a row to expand its traceability chain inline.
 - Build + typecheck + lint pass (fixed a real TS issue: chaining `.returns<T[]>()` directly on `.rpc()` without a generated `Database` type hits a known supabase-js typing quirk — worked around by casting the RPC result instead). Dev server starts clean, no runtime errors on the route. **UI not yet verified in browser with a real session.**
 
+## Phase 9 — WIP Request / FG Inspection Request: สถานะ **บางส่วน (DB เสร็จ+verified, UI ยังไม่ได้ทดสอบในเบราว์เซอร์)**
+
+Done:
+- Migration `supabase/migrations/0013_wip_request.sql`: `wip_requests` (request_no via `wip_request` doc_type). **No separate "FG Inspection Batch" table** — a `CONFIRMED` `wip_requests` row *is* the batch; Phase 10 will reference `wip_request_id` directly when it creates the new FG Lot. Two-step design matching the doc's wording exactly: `create_wip_request()` records the request only (no stock effect), `confirm_wip_request()` is the actual "ตัด WIP" — row-locks the source `stock_balance`, validates qty, deducts it (no destination balance — the qty becomes an ephemeral batch in QC's hands until Phase 10 creates FG lots), sets status `CONFIRMED`. `cancel_wip_request()` for PENDING→CANCELLED. Widened `stock_transactions.txn_type` with `WIP_REQUEST_OUT`.
+- Verified against the real dev DB end-to-end: request creation has zero stock effect (confirmed balance unchanged), WAREHOUSE role (no `approve` permission by default) correctly blocked from confirming, ADMIN confirm correctly cuts WIP stock (80→50) and flips status, double-confirming the same request rejected, over-requesting more than available rejected, cancel path works. All test data cleaned up after.
+- UI: `/wip-requests` — pick from live WIP stock (reuses Phase 8's `get_wip_stock()`), qty + inspection plan + purpose, request list with Confirm/Cancel actions gated by `approve`/`reject` permissions. Added to sidebar nav under QC.
+- Build + typecheck + lint pass, dev server starts clean, no runtime errors on the route. **UI not yet verified in browser with a real session.**
+
 ## Key files
 
 - `supabase/migrations/0001_document_numbering.sql` — document numbering
@@ -176,6 +184,8 @@ Done:
 - `src/types/iqc.ts`, `src/app/(app)/iqc/` — IQC page (split-lot inspection + defect code management)
 - `supabase/migrations/0012_wip_stock.sql` — get_wip_stock(), get_lot_traceability()
 - `src/types/wip-stock.ts`, `src/app/(app)/wip-stock/` — WIP Stock page (read-only + traceability)
+- `supabase/migrations/0013_wip_request.sql` — wip_requests, create_wip_request(), confirm_wip_request(), cancel_wip_request()
+- `src/types/wip-request.ts`, `src/app/(app)/wip-requests/` — WIP Request page
 - `src/proxy.ts` — auth-gate for all routes except `/login` (Next.js 16 middleware replacement)
 - `src/app/(app)/layout.tsx` — authenticated shell (Sidebar/Header), redirects to `/login` if no session
 - `src/app/login/page.tsx` — sign-in

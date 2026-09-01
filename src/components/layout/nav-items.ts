@@ -34,6 +34,7 @@ export const navGroups: NavGroup[] = [
     items: [
       { label: "Incoming QC (IQC)", href: "/iqc" },
       { label: "WIP Stock", href: "/wip-stock" },
+      { label: "WIP Request", href: "/wip-requests" },
       { label: "FG Inspection", href: "/fg-inspection" },
       { label: "OQC / Final QC", href: "/oqc" },
     ],
