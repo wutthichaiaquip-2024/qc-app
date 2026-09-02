@@ -63,10 +63,10 @@ export function EntityManager<T extends Record<string, unknown>>({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="overflow-x-auto rounded-lg border border-black/10 dark:border-white/10">
+      <div className="overflow-x-auto rounded-lg border border-border">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-black/10 dark:border-white/10 text-left text-black/50 dark:text-white/50">
+            <tr className="border-b border-border text-left text-foreground-muted">
               {columns.map((c) => (
                 <th key={c.key} className="px-3 py-2 font-medium whitespace-nowrap">
                   {c.label}
@@ -78,13 +78,13 @@ export function EntityManager<T extends Record<string, unknown>>({
           <tbody>
             {rows.length === 0 && (
               <tr>
-                <td colSpan={columns.length + (printLabelType ? 1 : 0)} className="px-3 py-4 text-black/50 dark:text-white/50">
+                <td colSpan={columns.length + (printLabelType ? 1 : 0)} className="px-3 py-4 text-foreground-muted">
                   {emptyLabel}
                 </td>
               </tr>
             )}
             {rows.map((row, i) => (
-              <tr key={i} className="border-b border-black/5 dark:border-white/5 last:border-0">
+              <tr key={i} className="border-b border-border last:border-0">
                 {columns.map((c) => {
                   const raw = row[c.key];
                   const label = cellLabelMaps?.[c.key]?.[String(raw)];
@@ -112,10 +112,10 @@ export function EntityManager<T extends Record<string, unknown>>({
       </div>
 
       {editable && (
-        <form onSubmit={handleAdd} className="flex flex-wrap items-end gap-2 rounded-lg border border-black/10 dark:border-white/10 p-3">
+        <form onSubmit={handleAdd} className="flex flex-wrap items-end gap-2 rounded-lg border border-border p-3">
           {fields.map((f) => (
             <div key={f.key} className="flex flex-col gap-1 min-w-[10rem]">
-              <label className="text-xs text-black/50 dark:text-white/50">{f.label}</label>
+              <label className="text-xs text-foreground-muted">{f.label}</label>
               <FieldInput
                 field={f}
                 value={form[f.key] ?? ""}
@@ -126,11 +126,11 @@ export function EntityManager<T extends Record<string, unknown>>({
           <button
             type="submit"
             disabled={saving}
-            className="rounded-md bg-black text-white dark:bg-white dark:text-black px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+            className="rounded-md bg-brand text-brand-foreground hover:brightness-110 px-3 py-1.5 text-sm font-medium disabled:opacity-50"
           >
             {saving ? "กำลังบันทึก..." : "เพิ่ม"}
           </button>
-          {error && <span className="text-sm text-red-600 w-full">{error}</span>}
+          {error && <span className="text-sm text-danger w-full">{error}</span>}
         </form>
       )}
     </div>

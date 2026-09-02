@@ -17,7 +17,7 @@ export function FieldInput({
   onChange: (value: string) => void;
 }) {
   const baseClass =
-    "rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm w-full";
+    "rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm w-full";
 
   if (field.type === "select") {
     return (

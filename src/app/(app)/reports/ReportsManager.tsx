@@ -213,7 +213,7 @@ export function ReportsManager() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex gap-1 border-b border-black/10 dark:border-white/10">
+      <div className="flex gap-1 border-b border-border">
         {REPORT_TYPES.map((t) => (
           <button
             key={t.key}
@@ -221,7 +221,7 @@ export function ReportsManager() {
             className={`px-3 py-2 text-sm border-b-2 -mb-px ${
               reportType === t.key
                 ? "border-black dark:border-white font-medium"
-                : "border-transparent text-black/50 dark:text-white/50 hover:text-black dark:hover:text-white"
+                : "border-transparent text-foreground-muted hover:text-black dark:hover:text-white"
             }`}
           >
             {t.label}
@@ -233,26 +233,26 @@ export function ReportsManager() {
         {(reportType === "QC" || reportType === "SUPPLIER_QUALITY") && (
           <>
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-black/50 dark:text-white/50">จากวันที่</label>
+              <label className="text-xs text-foreground-muted">จากวันที่</label>
               <input
                 type="date"
                 value={from}
                 onChange={(e) => setFrom(e.target.value)}
-                className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm"
+                className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm"
               />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-black/50 dark:text-white/50">ถึงวันที่</label>
+              <label className="text-xs text-foreground-muted">ถึงวันที่</label>
               <input
                 type="date"
                 value={to}
                 onChange={(e) => setTo(e.target.value)}
-                className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm"
+                className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm"
               />
             </div>
             <button
               onClick={loadPreview}
-              className="rounded-md border border-black/15 dark:border-white/15 px-3 py-1.5 text-sm hover:bg-black/5 dark:hover:bg-white/10"
+              className="rounded-md border border-border-strong px-3 py-1.5 text-sm hover:bg-surface-muted"
             >
               ดูตัวอย่าง
             </button>
@@ -261,14 +261,14 @@ export function ReportsManager() {
 
         {reportType === "TRACEABILITY" && (
           <div className="flex flex-col gap-1 max-w-sm">
-            <label className="text-xs text-black/50 dark:text-white/50">Lot No. (สำหรับ Export)</label>
+            <label className="text-xs text-foreground-muted">Lot No. (สำหรับ Export)</label>
             <input
               value={lotNo}
               onChange={(e) => setLotNo(e.target.value)}
               placeholder="เช่น LOT-2026-00001"
-              className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm"
+              className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm"
             />
-            <p className="text-xs text-black/40 dark:text-white/40">
+            <p className="text-xs text-foreground-muted">
               ดู genealogy แบบเต็มได้ที่หน้า{" "}
               <Link href="/traceability" className="underline">
                 Traceability
@@ -280,13 +280,13 @@ export function ReportsManager() {
         <div className="flex gap-2 ml-auto">
           <button
             onClick={() => exportReport("CSV")}
-            className="rounded-md bg-black text-white dark:bg-white dark:text-black px-3 py-1.5 text-sm"
+            className="rounded-md bg-brand text-brand-foreground hover:brightness-110 px-3 py-1.5 text-sm"
           >
             Export CSV
           </button>
           <button
             onClick={() => exportReport("PDF")}
-            className="rounded-md border border-black/15 dark:border-white/15 px-3 py-1.5 text-sm hover:bg-black/5 dark:hover:bg-white/10"
+            className="rounded-md border border-border-strong px-3 py-1.5 text-sm hover:bg-surface-muted"
           >
             Export PDF
           </button>
@@ -294,10 +294,10 @@ export function ReportsManager() {
       </div>
 
       {reportType !== "TRACEABILITY" && (
-        <div className="overflow-x-auto rounded-lg border border-black/10 dark:border-white/10">
+        <div className="overflow-x-auto rounded-lg border border-border">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-black/10 dark:border-white/10 text-left text-black/50 dark:text-white/50">
+              <tr className="border-b border-border text-left text-foreground-muted">
                 {columns.map((c) => (
                   <th key={c.key} className="px-3 py-2 font-medium">
                     {c.label}
@@ -308,28 +308,28 @@ export function ReportsManager() {
             <tbody>
               {loading && (
                 <tr>
-                  <td colSpan={columns.length} className="px-3 py-4 text-black/50 dark:text-white/50">
+                  <td colSpan={columns.length} className="px-3 py-4 text-foreground-muted">
                     กำลังโหลด...
                   </td>
                 </tr>
               )}
               {!loading && previewError && (
                 <tr>
-                  <td colSpan={columns.length} className="px-3 py-4 text-red-600">
+                  <td colSpan={columns.length} className="px-3 py-4 text-danger">
                     {previewError}
                   </td>
                 </tr>
               )}
               {!loading && !previewError && rows.length === 0 && (
                 <tr>
-                  <td colSpan={columns.length} className="px-3 py-4 text-black/50 dark:text-white/50">
+                  <td colSpan={columns.length} className="px-3 py-4 text-foreground-muted">
                     ยังไม่มีข้อมูล
                   </td>
                 </tr>
               )}
               {!loading &&
                 rows.map((r, i) => (
-                  <tr key={i} className="border-b border-black/5 dark:border-white/5 last:border-0">
+                  <tr key={i} className="border-b border-border last:border-0">
                     {columns.map((c) => (
                       <td key={c.key} className="px-3 py-2">
                         {formatCell(r[c.key])}
@@ -344,10 +344,10 @@ export function ReportsManager() {
 
       <div className="flex flex-col gap-2">
         <h2 className="text-sm font-medium">ไฟล์ Export</h2>
-        <div className="overflow-x-auto rounded-lg border border-black/10 dark:border-white/10">
+        <div className="overflow-x-auto rounded-lg border border-border">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-black/10 dark:border-white/10 text-left text-black/50 dark:text-white/50">
+              <tr className="border-b border-border text-left text-foreground-muted">
                 <th className="px-3 py-2 font-medium">Report</th>
                 <th className="px-3 py-2 font-medium">Format</th>
                 <th className="px-3 py-2 font-medium">สถานะ</th>
@@ -358,18 +358,18 @@ export function ReportsManager() {
             <tbody>
               {jobs.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-3 py-4 text-black/50 dark:text-white/50">
+                  <td colSpan={5} className="px-3 py-4 text-foreground-muted">
                     ยังไม่มีคำขอ Export
                   </td>
                 </tr>
               )}
               {jobs.map((j) => (
-                <tr key={j.id} className="border-b border-black/5 dark:border-white/5 last:border-0">
+                <tr key={j.id} className="border-b border-border last:border-0">
                   <td className="px-3 py-2">{REPORT_TYPES.find((t) => t.key === j.report_type)?.label ?? j.report_type}</td>
                   <td className="px-3 py-2">{j.format}</td>
                   <td className="px-3 py-2">
                     {j.status === "FAILED" ? (
-                      <span className="text-red-600" title={j.error ?? ""}>
+                      <span className="text-danger" title={j.error ?? ""}>
                         {STATUS_LABEL[j.status]}
                       </span>
                     ) : (

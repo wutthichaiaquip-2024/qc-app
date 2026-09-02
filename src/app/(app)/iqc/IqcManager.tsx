@@ -133,13 +133,13 @@ export function IqcManager({
   return (
     <div className="flex flex-col gap-4">
       {canCreate && (
-        <div className="flex flex-col gap-3 rounded-lg border border-black/10 dark:border-white/10 p-3">
+        <div className="flex flex-col gap-3 rounded-lg border border-border p-3">
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-black/50 dark:text-white/50">Lot ที่รอตรวจ (อยู่ใน INCOMING)</label>
+            <label className="text-xs text-foreground-muted">Lot ที่รอตรวจ (อยู่ใน INCOMING)</label>
             <select
               value={selected?.lot_id ?? ""}
               onChange={(e) => selectLot(e.target.value)}
-              className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm"
+              className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm"
             >
               <option value="">—</option>
               {pendingLots.map((l) => (
@@ -153,7 +153,7 @@ export function IqcManager({
           {selected && (
             <>
               {preview && (
-                <p className="text-sm text-black/50 dark:text-white/50">
+                <p className="text-sm text-foreground-muted">
                   Inspection Plan: {preview.sampling_standard ?? "— ไม่มี —"} / Level{" "}
                   {preview.inspection_level ?? "—"} / AQL {preview.aql ?? "—"} → Sample Size{" "}
                   {preview.sample_size ?? "— ยังไม่มีข้อมูล Ac/Re สำหรับ code letter นี้ —"}
@@ -161,25 +161,25 @@ export function IqcManager({
                 </p>
               )}
               {!preview && (
-                <p className="text-sm text-amber-600 dark:text-amber-500">
+                <p className="text-sm text-warning">
                   ⚠️ ไม่มี Inspection Plan สำหรับ Item นี้ — กรอกผลตรวจได้ตามปกติ แต่ไม่มีคำแนะนำ Sample Size
                 </p>
               )}
 
               <div className="flex flex-wrap gap-3">
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-black/50 dark:text-white/50">Qty Pass</label>
+                  <label className="text-xs text-foreground-muted">Qty Pass</label>
                   <input
                     type="number"
                     value={qtyPass}
                     onChange={(e) => setQtyPass(e.target.value)}
-                    className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm w-24"
+                    className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm w-24"
                   />
                   {Number(qtyPass) > 0 && (
                     <select
                       value={wipLocationId}
                       onChange={(e) => setWipLocationId(e.target.value)}
-                      className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm"
+                      className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm"
                     >
                       <option value="">WIP Location</option>
                       {siteLocations("WIP").map((l) => (
@@ -191,18 +191,18 @@ export function IqcManager({
                   )}
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-black/50 dark:text-white/50">Qty Hold</label>
+                  <label className="text-xs text-foreground-muted">Qty Hold</label>
                   <input
                     type="number"
                     value={qtyHold}
                     onChange={(e) => setQtyHold(e.target.value)}
-                    className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm w-24"
+                    className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm w-24"
                   />
                   {Number(qtyHold) > 0 && (
                     <select
                       value={holdLocationId}
                       onChange={(e) => setHoldLocationId(e.target.value)}
-                      className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm"
+                      className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm"
                     >
                       <option value="">HOLD Location</option>
                       {siteLocations("HOLD").map((l) => (
@@ -214,18 +214,18 @@ export function IqcManager({
                   )}
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-black/50 dark:text-white/50">Qty NG</label>
+                  <label className="text-xs text-foreground-muted">Qty NG</label>
                   <input
                     type="number"
                     value={qtyNg}
                     onChange={(e) => setQtyNg(e.target.value)}
-                    className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm w-24"
+                    className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm w-24"
                   />
                   {Number(qtyNg) > 0 && (
                     <select
                       value={ngLocationId}
                       onChange={(e) => setNgLocationId(e.target.value)}
-                      className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm"
+                      className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm"
                     >
                       <option value="">NG Location</option>
                       {siteLocations("NG").map((l) => (
@@ -239,13 +239,13 @@ export function IqcManager({
               </div>
 
               <div className="flex flex-col gap-2">
-                <span className="text-xs text-black/50 dark:text-white/50">Defect Details</span>
+                <span className="text-xs text-foreground-muted">Defect Details</span>
                 {defects.map((d, i) => (
                   <div key={i} className="flex flex-wrap items-end gap-2">
                     <select
                       value={d.defect_code_id}
                       onChange={(e) => updateDefect(i, { defect_code_id: e.target.value })}
-                      className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm"
+                      className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm"
                     >
                       <option value="">Defect Code</option>
                       {defectCodes.map((dc) => (
@@ -259,13 +259,13 @@ export function IqcManager({
                       type="number"
                       value={d.qty}
                       onChange={(e) => updateDefect(i, { qty: e.target.value })}
-                      className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm w-20"
+                      className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm w-20"
                     />
                     <textarea
                       placeholder="Condition Note (บรรยายลักษณะปัญหา)"
                       value={d.condition_note}
                       onChange={(e) => updateDefect(i, { condition_note: e.target.value })}
-                      className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm flex-1 min-w-[14rem]"
+                      className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm flex-1 min-w-[14rem]"
                       rows={1}
                     />
                   </div>
@@ -273,7 +273,7 @@ export function IqcManager({
                 <button
                   type="button"
                   onClick={addDefect}
-                  className="self-start text-sm text-black/50 dark:text-white/50 hover:text-black dark:hover:text-white"
+                  className="self-start text-sm text-foreground-muted hover:text-black dark:hover:text-white"
                 >
                   + เพิ่ม Defect
                 </button>
@@ -282,21 +282,21 @@ export function IqcManager({
               <button
                 onClick={handleSubmit}
                 disabled={submitting}
-                className="self-start rounded-md bg-black text-white dark:bg-white dark:text-black px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+                className="self-start rounded-md bg-brand text-brand-foreground hover:brightness-110 px-3 py-1.5 text-sm font-medium disabled:opacity-50"
               >
                 {submitting ? "กำลังบันทึก..." : "Confirm IQC"}
               </button>
             </>
           )}
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-danger">{error}</p>}
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-lg border border-black/10 dark:border-white/10">
+      <div className="overflow-x-auto rounded-lg border border-border">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-black/10 dark:border-white/10 text-left text-black/50 dark:text-white/50">
+            <tr className="border-b border-border text-left text-foreground-muted">
               <th className="px-3 py-2 font-medium">IQC No.</th>
               <th className="px-3 py-2 font-medium">Lot Size</th>
               <th className="px-3 py-2 font-medium">Sample</th>
@@ -308,13 +308,13 @@ export function IqcManager({
           <tbody>
             {inspections.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-3 py-4 text-black/50 dark:text-white/50">
+                <td colSpan={6} className="px-3 py-4 text-foreground-muted">
                   ยังไม่มีการตรวจ IQC
                 </td>
               </tr>
             )}
             {inspections.map((i) => (
-              <tr key={i.id} className="border-b border-black/5 dark:border-white/5 last:border-0">
+              <tr key={i.id} className="border-b border-border last:border-0">
                 <td className="px-3 py-2">{i.iqc_no}</td>
                 <td className="px-3 py-2">{i.lot_size}</td>
                 <td className="px-3 py-2">{i.sample_size ?? "—"}</td>

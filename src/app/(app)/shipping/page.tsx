@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { UserProfile } from "@/types/auth";
 import type { Shipment, ShipmentBox, ShippingQueueItem } from "@/types/shipping";
 import { ShippingManager } from "./ShippingManager";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 export default async function ShippingPage() {
   const supabase = await createClient();
@@ -45,12 +46,7 @@ export default async function ShippingPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h1 className="text-xl font-semibold">Packing & Shipping</h1>
-        <p className="text-sm text-black/50 dark:text-white/50">
-          จัดของลงกล่อง → Confirm Shipment ตัดสต็อกออกจากระบบจริง
-        </p>
-      </div>
+      <PageHeader title="Packing & Shipping" description="จัดของลงกล่อง → Confirm Shipment ตัดสต็อกออกจากระบบจริง" />
 
       <ShippingManager
         queue={(queueRes.data ?? []) as ShippingQueueItem[]}

@@ -4,6 +4,7 @@ import type { Item, Location } from "@/types/master-data";
 import type { DefectCode, IqcInspection, PendingLot } from "@/types/iqc";
 import { EntityManager } from "@/components/master-data/EntityManager";
 import { IqcManager } from "./IqcManager";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 export default async function IqcPage() {
   const supabase = await createClient();
@@ -67,12 +68,7 @@ export default async function IqcPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h1 className="text-xl font-semibold">Incoming QC (IQC)</h1>
-        <p className="text-sm text-black/50 dark:text-white/50">
-          เลือก Lot ที่รอตรวจ → ระบบคำนวณ Sample Size ให้อัตโนมัติ → บันทึกผล Split-Lot
-        </p>
-      </div>
+      <PageHeader title="Incoming QC (IQC)" description="เลือก Lot ที่รอตรวจ → ระบบคำนวณ Sample Size ให้อัตโนมัติ → บันทึกผล Split-Lot" />
 
       <IqcManager
         pendingLots={pendingLots}

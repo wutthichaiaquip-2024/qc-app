@@ -12,6 +12,7 @@ import type {
 import { ZONE_TYPES, SAMPLING_STANDARDS, INSPECTION_LEVELS } from "@/types/master-data";
 import { EntityManager } from "@/components/master-data/EntityManager";
 import { Tabs } from "./Tabs";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 export default async function MasterDataPage() {
   const supabase = await createClient();
@@ -69,12 +70,7 @@ export default async function MasterDataPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h1 className="text-xl font-semibold">Master Data</h1>
-        <p className="text-sm text-black/50 dark:text-white/50">
-          Customer, Supplier, Item, Location, Inspection Plan
-        </p>
-      </div>
+      <PageHeader title="Master Data" description="Customer, Supplier, Item, Location, Inspection Plan" />
 
       <Tabs
         tabs={[
@@ -286,7 +282,7 @@ export default async function MasterDataPage() {
             label: "AQL Sampling Table",
             content: (
               <div className="flex flex-col gap-3">
-                <p className="text-sm text-amber-600 dark:text-amber-500">
+                <p className="text-sm text-warning">
                   ตารางนี้กำหนดผล accept/reject ของการตรวจจริง — กรอกค่าจากเอกสารมาตรฐาน ISO
                   2859-1 / ANSI Z1.4 ฉบับจริงที่บริษัทถืออยู่เท่านั้น ห้ามเดา
                 </p>

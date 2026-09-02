@@ -3,6 +3,7 @@ import type { UserProfile } from "@/types/auth";
 import type { Location } from "@/types/master-data";
 import type { OqcInspection, OqcQueueItem } from "@/types/oqc";
 import { OqcManager } from "./OqcManager";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 export default async function OqcPage() {
   const supabase = await createClient();
@@ -36,12 +37,7 @@ export default async function OqcPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h1 className="text-xl font-semibold">OQC / Final QC</h1>
-        <p className="text-sm text-black/50 dark:text-white/50">
-          ตรวจครั้งสุดท้ายก่อนแพ็คส่ง — ไม่ผ่านจะวนกลับเข้า Rework/Hold queue
-        </p>
-      </div>
+      <PageHeader title="OQC / Final QC" description="ตรวจครั้งสุดท้ายก่อนแพ็คส่ง — ไม่ผ่านจะวนกลับเข้า Rework/Hold queue" />
 
       <OqcManager
         queue={(queueRes.data ?? []) as OqcQueueItem[]}

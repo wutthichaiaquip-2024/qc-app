@@ -193,14 +193,14 @@ export function PurchaseOrderManager({
   return (
     <div className="flex flex-col gap-4">
       {canCreate && (
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3 rounded-lg border border-black/10 dark:border-white/10 p-3">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3 rounded-lg border border-border p-3">
           <div className="flex flex-wrap items-end gap-2">
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-black/50 dark:text-white/50">Supplier</label>
+              <label className="text-xs text-foreground-muted">Supplier</label>
               <select
                 value={supplierId}
                 onChange={(e) => setSupplierId(e.target.value)}
-                className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm"
+                className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm"
               >
                 <option value="">—</option>
                 {suppliers.map((s) => (
@@ -211,40 +211,40 @@ export function PurchaseOrderManager({
               </select>
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-black/50 dark:text-white/50">PO Date</label>
+              <label className="text-xs text-foreground-muted">PO Date</label>
               <input
                 type="date"
                 value={poDate}
                 onChange={(e) => setPoDate(e.target.value)}
-                className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm"
+                className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm"
               />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-black/50 dark:text-white/50">Currency</label>
+              <label className="text-xs text-foreground-muted">Currency</label>
               <input
                 value={currency}
                 onChange={(e) => setCurrency(e.target.value)}
-                className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm w-20"
+                className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm w-20"
               />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-black/50 dark:text-white/50">Delivery Date</label>
+              <label className="text-xs text-foreground-muted">Delivery Date</label>
               <input
                 type="date"
                 value={deliveryDate}
                 onChange={(e) => setDeliveryDate(e.target.value)}
-                className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm"
+                className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm"
               />
             </div>
           </div>
 
           <div className="flex flex-col gap-2">
             {lines.map((line, i) => (
-              <div key={i} className="flex flex-wrap items-end gap-2 rounded-md border border-black/5 dark:border-white/5 p-2">
+              <div key={i} className="flex flex-wrap items-end gap-2 rounded-md border border-border p-2">
                 <select
                   value={line.item_id}
                   onChange={(e) => updateLine(i, { item_id: e.target.value })}
-                  className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm"
+                  className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm"
                 >
                   <option value="">Part No.</option>
                   {items.map((it) => (
@@ -258,13 +258,13 @@ export function PurchaseOrderManager({
                   type="number"
                   value={line.qty}
                   onChange={(e) => updateLine(i, { qty: e.target.value })}
-                  className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm w-20"
+                  className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm w-20"
                 />
                 <input
                   placeholder="Unit"
                   value={line.unit}
                   onChange={(e) => updateLine(i, { unit: e.target.value })}
-                  className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm w-20"
+                  className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm w-20"
                 />
                 <input
                   placeholder="Unit Price"
@@ -272,33 +272,33 @@ export function PurchaseOrderManager({
                   step="0.01"
                   value={line.unit_price}
                   onChange={(e) => updateLine(i, { unit_price: e.target.value })}
-                  className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm w-24"
+                  className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm w-24"
                 />
                 <input
                   placeholder="Required Date"
                   type="date"
                   value={line.required_date}
                   onChange={(e) => updateLine(i, { required_date: e.target.value })}
-                  className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm"
+                  className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm"
                 />
                 <input
                   placeholder="ETA"
                   type="date"
                   value={line.eta}
                   onChange={(e) => updateLine(i, { eta: e.target.value })}
-                  className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm"
+                  className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm"
                 />
                 <input
                   placeholder="Technical Spec / Drawing Rev"
                   value={line.technical_spec}
                   onChange={(e) => updateLine(i, { technical_spec: e.target.value })}
-                  className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm flex-1 min-w-[10rem]"
+                  className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm flex-1 min-w-[10rem]"
                 />
                 {lines.length > 1 && (
                   <button
                     type="button"
                     onClick={() => setLines((prev) => prev.filter((_, idx) => idx !== i))}
-                    className="text-sm text-red-600"
+                    className="text-sm text-danger"
                   >
                     ลบ
                   </button>
@@ -308,7 +308,7 @@ export function PurchaseOrderManager({
             <button
               type="button"
               onClick={() => setLines((prev) => [...prev, { ...emptyLine }])}
-              className="self-start text-sm text-black/50 dark:text-white/50 hover:text-black dark:hover:text-white"
+              className="self-start text-sm text-foreground-muted hover:text-black dark:hover:text-white"
             >
               + เพิ่ม line
             </button>
@@ -317,18 +317,18 @@ export function PurchaseOrderManager({
           <button
             type="submit"
             disabled={submitting}
-            className="self-start rounded-md bg-black text-white dark:bg-white dark:text-black px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+            className="self-start rounded-md bg-brand text-brand-foreground hover:brightness-110 px-3 py-1.5 text-sm font-medium disabled:opacity-50"
           >
             {submitting ? "กำลังบันทึก..." : "Create PO"}
           </button>
-          {submitError && <p className="text-sm text-red-600">{submitError}</p>}
+          {submitError && <p className="text-sm text-danger">{submitError}</p>}
         </form>
       )}
 
-      <div className="overflow-x-auto rounded-lg border border-black/10 dark:border-white/10">
+      <div className="overflow-x-auto rounded-lg border border-border">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-black/10 dark:border-white/10 text-left text-black/50 dark:text-white/50">
+            <tr className="border-b border-border text-left text-foreground-muted">
               <th className="px-3 py-2 font-medium">PO No.</th>
               <th className="px-3 py-2 font-medium">Supplier</th>
               <th className="px-3 py-2 font-medium">PO Date</th>
@@ -339,7 +339,7 @@ export function PurchaseOrderManager({
           <tbody>
             {orders.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-3 py-4 text-black/50 dark:text-white/50">
+                <td colSpan={5} className="px-3 py-4 text-foreground-muted">
                   ยังไม่มี Purchase Order
                 </td>
               </tr>
@@ -347,7 +347,7 @@ export function PurchaseOrderManager({
             {orders.map((po) => (
               <Fragment key={po.id}>
                 <tr
-                  className="border-b border-black/5 dark:border-white/5 cursor-pointer"
+                  className="border-b border-border cursor-pointer"
                   onClick={() => toggleExpand(po.id)}
                 >
                   <td className="px-3 py-2">{po.po_no}</td>
@@ -360,7 +360,7 @@ export function PurchaseOrderManager({
                         <button
                           key={next}
                           onClick={() => handleTransition(po.id, next)}
-                          className="rounded-md border border-black/15 dark:border-white/15 px-2 py-0.5 text-xs hover:bg-black/[.04] dark:hover:bg-white/[.06]"
+                          className="rounded-md border border-border-strong px-2 py-0.5 text-xs hover:bg-surface-muted"
                         >
                           → {next}
                         </button>
@@ -370,10 +370,10 @@ export function PurchaseOrderManager({
                 </tr>
                 {expanded === po.id && (
                   <tr>
-                    <td colSpan={5} className="px-3 py-2 bg-black/[.02] dark:bg-white/[.03]">
+                    <td colSpan={5} className="px-3 py-2 bg-surface-muted">
                       <table className="w-full text-xs">
                         <thead>
-                          <tr className="text-left text-black/50 dark:text-white/50">
+                          <tr className="text-left text-foreground-muted">
                             <th className="px-2 py-1">Part No.</th>
                             <th className="px-2 py-1">Qty</th>
                             <th className="px-2 py-1">Unit</th>
@@ -413,7 +413,7 @@ export function PurchaseOrderManager({
                                       <button
                                         type="button"
                                         onClick={() => fileInputs.current[l.id]?.click()}
-                                        className="text-left text-black/50 dark:text-white/50 hover:text-black dark:hover:text-white"
+                                        className="text-left text-foreground-muted hover:text-black dark:hover:text-white"
                                       >
                                         + แนบไฟล์
                                       </button>

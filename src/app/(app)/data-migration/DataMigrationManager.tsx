@@ -51,7 +51,7 @@ export function DataMigrationManager({
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-semibold">Master Data Import</h2>
         {!canImportMasterData && (
-          <p className="text-sm text-black/50 dark:text-white/50">
+          <p className="text-sm text-foreground-muted">
             Role &quot;{role}&quot; ไม่มีสิทธิ์ master_data.create — ติดต่อ ADMIN
           </p>
         )}
@@ -119,7 +119,7 @@ export function DataMigrationManager({
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-semibold">Opening Stock Balance</h2>
         {!canImportOpeningBalance && (
-          <p className="text-sm text-black/50 dark:text-white/50">
+          <p className="text-sm text-foreground-muted">
             Role &quot;{role}&quot; ไม่มีสิทธิ์ stock_adjustments.approve — Opening Balance เขียน ledger จริง
             จึงต้องมีสิทธิ์ระดับผู้อนุมัติ
           </p>
@@ -148,22 +148,22 @@ export function DataMigrationManager({
 
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-semibold">RLS Coverage Audit</h2>
-        <p className="text-sm text-black/50 dark:text-white/50">
+        <p className="text-sm text-foreground-muted">
           ตรวจสอบว่าทุกตารางเปิด Row Level Security และมี Policy ก่อน Go-live (ADMIN เท่านั้น)
         </p>
         <button
           onClick={runAudit}
           disabled={auditLoading}
-          className="self-start rounded-md border border-black/15 dark:border-white/15 px-3 py-1.5 text-sm hover:bg-black/5 dark:hover:bg-white/10 disabled:opacity-50"
+          className="self-start rounded-md border border-border-strong px-3 py-1.5 text-sm hover:bg-surface-muted disabled:opacity-50"
         >
           {auditLoading ? "กำลังตรวจสอบ..." : "รัน RLS Audit"}
         </button>
-        {auditError && <p className="text-sm text-red-600">{auditError}</p>}
+        {auditError && <p className="text-sm text-danger">{auditError}</p>}
         {auditRows && (
-          <div className="overflow-x-auto rounded-lg border border-black/10 dark:border-white/10 max-h-96 overflow-y-auto">
+          <div className="overflow-x-auto rounded-lg border border-border max-h-96 overflow-y-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-black/10 dark:border-white/10 text-left text-black/50 dark:text-white/50">
+                <tr className="border-b border-border text-left text-foreground-muted">
                   <th className="px-3 py-2 font-medium">Table</th>
                   <th className="px-3 py-2 font-medium">RLS Enabled</th>
                   <th className="px-3 py-2 font-medium">Policy Count</th>
@@ -173,12 +173,12 @@ export function DataMigrationManager({
                 {auditRows.map((r) => {
                   const flagged = !r.rls_enabled || r.policy_count === 0;
                   return (
-                    <tr key={r.table_name} className="border-b border-black/5 dark:border-white/5 last:border-0">
+                    <tr key={r.table_name} className="border-b border-border last:border-0">
                       <td className="px-3 py-2">{r.table_name}</td>
-                      <td className={`px-3 py-2 ${r.rls_enabled ? "" : "text-red-600 font-medium"}`}>
+                      <td className={`px-3 py-2 ${r.rls_enabled ? "" : "text-danger font-medium"}`}>
                         {r.rls_enabled ? "Yes" : "NO"}
                       </td>
-                      <td className={`px-3 py-2 ${flagged ? "text-amber-600" : ""}`}>{r.policy_count}</td>
+                      <td className={`px-3 py-2 ${flagged ? "text-warning" : ""}`}>{r.policy_count}</td>
                     </tr>
                   );
                 })}

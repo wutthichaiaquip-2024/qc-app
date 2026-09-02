@@ -54,36 +54,36 @@ export function NotificationBell() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="relative rounded-md p-1.5 hover:bg-black/5 dark:hover:bg-white/10"
+        className="relative rounded-md p-1.5 hover:bg-surface-muted"
         aria-label="การแจ้งเตือน"
       >
         <BellIcon />
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-medium text-white">
+          <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[10px] font-medium text-white">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="absolute right-0 z-20 mt-2 w-80 rounded-lg border border-black/10 dark:border-white/10 bg-white dark:bg-neutral-900 shadow-lg">
-          <div className="border-b border-black/10 dark:border-white/10 px-3 py-2 text-sm font-medium">
+        <div className="absolute right-0 z-20 mt-2 w-80 rounded-lg border border-border bg-white dark:bg-neutral-900 shadow-lg">
+          <div className="border-b border-border px-3 py-2 text-sm font-medium">
             การแจ้งเตือน
           </div>
           <div className="max-h-96 overflow-y-auto">
             {items.length === 0 && (
-              <p className="px-3 py-4 text-sm text-black/50 dark:text-white/50">ไม่มีการแจ้งเตือน</p>
+              <p className="px-3 py-4 text-sm text-foreground-muted">ไม่มีการแจ้งเตือน</p>
             )}
             {items.map((n) => {
               const content = (
                 <div
-                  className={`px-3 py-2 text-sm border-b border-black/5 dark:border-white/5 last:border-0 ${
-                    n.read_at ? "" : "bg-blue-50 dark:bg-blue-950/30"
+                  className={`px-3 py-2 text-sm border-b border-border last:border-0 ${
+                    n.read_at ? "" : "bg-brand-muted"
                   }`}
                 >
                   <div className="font-medium">{n.title}</div>
-                  <div className="text-black/60 dark:text-white/60">{n.message}</div>
-                  <div className="mt-0.5 text-xs text-black/40 dark:text-white/40">
+                  <div className="text-foreground-muted">{n.message}</div>
+                  <div className="mt-0.5 text-xs text-foreground-muted">
                     {new Date(n.created_at).toLocaleString("th-TH")}
                   </div>
                 </div>

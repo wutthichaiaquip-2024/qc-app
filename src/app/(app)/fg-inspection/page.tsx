@@ -6,6 +6,7 @@ import type { WipRequest } from "@/types/wip-request";
 import type { FgInspection, ItemDocument } from "@/types/fg-inspection";
 import { FgInspectionManager } from "./FgInspectionManager";
 import { ItemDocuments } from "./ItemDocuments";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 export default async function FgInspectionPage() {
   const supabase = await createClient();
@@ -50,12 +51,7 @@ export default async function FgInspectionPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-xl font-semibold">FG Inspection</h1>
-        <p className="text-sm text-black/50 dark:text-white/50">
-          ตรวจสอบ WIP Request ที่ Confirm แล้ว → สร้าง FG Lot ใหม่พร้อม Split-Lot
-        </p>
-      </div>
+      <PageHeader title="FG Inspection" description="ตรวจสอบ WIP Request ที่ Confirm แล้ว → สร้าง FG Lot ใหม่พร้อม Split-Lot" />
 
       <FgInspectionManager
         pendingRequests={pendingWr}

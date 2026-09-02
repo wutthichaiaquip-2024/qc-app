@@ -81,13 +81,13 @@ export function PickingManager({
   return (
     <div className="flex flex-col gap-4">
       {bySo.size === 0 && (
-        <p className="text-sm text-black/50 dark:text-white/50">ไม่มี SO ที่รอหยิบของ</p>
+        <p className="text-sm text-foreground-muted">ไม่มี SO ที่รอหยิบของ</p>
       )}
 
       {Array.from(bySo.entries()).map(([soId, lines]) => {
         const allConfirmed = lines.every((l) => confirmed.has(l.allocation_id));
         return (
-          <div key={soId} className="flex flex-col gap-2 rounded-lg border border-black/10 dark:border-white/10 p-3">
+          <div key={soId} className="flex flex-col gap-2 rounded-lg border border-border p-3">
             <div className="flex items-center justify-between">
               <span className="font-medium text-sm">
                 {lines[0].so_no} — {lines[0].customer_code}
@@ -98,7 +98,7 @@ export function PickingManager({
             </div>
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-black/50 dark:text-white/50">
+                <tr className="text-left text-foreground-muted">
                   <th className="px-2 py-1">Part No.</th>
                   <th className="px-2 py-1">Lot</th>
                   <th className="px-2 py-1">Location</th>
@@ -108,14 +108,14 @@ export function PickingManager({
               </thead>
               <tbody>
                 {lines.map((l) => (
-                  <tr key={l.allocation_id} className="border-t border-black/5 dark:border-white/5">
+                  <tr key={l.allocation_id} className="border-t border-border">
                     <td className="px-2 py-1">{l.part_no}</td>
                     <td className="px-2 py-1">{l.lot_no}</td>
                     <td className="px-2 py-1">{l.location_code}</td>
                     <td className="px-2 py-1">{l.qty}</td>
                     <td className="px-2 py-1">
                       {confirmed.has(l.allocation_id) ? (
-                        <span className="text-green-600">✓</span>
+                        <span className="text-success">✓</span>
                       ) : (
                         "—"
                       )}
@@ -128,7 +128,7 @@ export function PickingManager({
               <button
                 onClick={() => handleConfirm(soId)}
                 disabled={!allConfirmed || submitting === soId}
-                className="self-start rounded-md bg-black text-white dark:bg-white dark:text-black px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+                className="self-start rounded-md bg-brand text-brand-foreground hover:brightness-110 px-3 py-1.5 text-sm font-medium disabled:opacity-50"
               >
                 {submitting === soId ? "กำลังยืนยัน..." : "Confirm Picking"}
               </button>
@@ -137,15 +137,15 @@ export function PickingManager({
         );
       })}
 
-      {scanError && <p className="text-sm text-red-600">{scanError}</p>}
-      {submitError && <p className="text-sm text-red-600">{submitError}</p>}
+      {scanError && <p className="text-sm text-danger">{scanError}</p>}
+      {submitError && <p className="text-sm text-danger">{submitError}</p>}
 
       <div>
         <h2 className="text-lg font-semibold mb-2">Picking History</h2>
-        <div className="overflow-x-auto rounded-lg border border-black/10 dark:border-white/10">
+        <div className="overflow-x-auto rounded-lg border border-border">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-black/10 dark:border-white/10 text-left text-black/50 dark:text-white/50">
+              <tr className="border-b border-border text-left text-foreground-muted">
                 <th className="px-3 py-2 font-medium">Picking No.</th>
                 <th className="px-3 py-2 font-medium">Picked At</th>
               </tr>
@@ -153,13 +153,13 @@ export function PickingManager({
             <tbody>
               {pickings.length === 0 && (
                 <tr>
-                  <td colSpan={2} className="px-3 py-4 text-black/50 dark:text-white/50">
+                  <td colSpan={2} className="px-3 py-4 text-foreground-muted">
                     ยังไม่มีการหยิบของ
                   </td>
                 </tr>
               )}
               {pickings.map((p) => (
-                <tr key={p.id} className="border-b border-black/5 dark:border-white/5 last:border-0">
+                <tr key={p.id} className="border-b border-border last:border-0">
                   <td className="px-3 py-2">{p.picking_no}</td>
                   <td className="px-3 py-2">{new Date(p.picked_at).toLocaleString("th-TH")}</td>
                 </tr>

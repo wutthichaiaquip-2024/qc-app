@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { UserProfile } from "@/types/auth";
 import type { Item, Location } from "@/types/master-data";
 import { DataMigrationManager } from "./DataMigrationManager";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 export default async function DataMigrationPage() {
   const supabase = await createClient();
@@ -27,13 +28,7 @@ export default async function DataMigrationPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h1 className="text-xl font-semibold">Data Migration</h1>
-        <p className="text-sm text-black/50 dark:text-white/50">
-          นำเข้า Master Data และยอดยกมา (Opening Stock Balance) จากระบบเดิม — ใช้ครั้งเดียวตอน Cutover
-          ตรวจสอบข้อมูลก่อน Import เสมอ (ทั้งไฟล์ผิดแม้แถวเดียว จะไม่มีข้อมูลเข้าตารางจริงเลย)
-        </p>
-      </div>
+      <PageHeader title="Data Migration" description="นำเข้า Master Data และยอดยกมา (Opening Stock Balance) จากระบบเดิม — ใช้ครั้งเดียวตอน Cutover ตรวจสอบข้อมูลก่อน Import เสมอ (ทั้งไฟล์ผิดแม้แถวเดียว จะไม่มีข้อมูลเข้าตารางจริงเลย)" />
 
       <DataMigrationManager
         role={role}

@@ -4,6 +4,7 @@ import type { InspectionPlan } from "@/types/master-data";
 import type { WipStockRow } from "@/types/wip-stock";
 import type { WipRequest } from "@/types/wip-request";
 import { WipRequestManager } from "./WipRequestManager";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 export default async function WipRequestsPage() {
   const supabase = await createClient();
@@ -39,12 +40,7 @@ export default async function WipRequestsPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h1 className="text-xl font-semibold">WIP Request / FG Inspection Request</h1>
-        <p className="text-sm text-black/50 dark:text-white/50">
-          เบิก WIP Lot เพื่อส่งตรวจ FG Inspection — Confirm แล้วจึงตัดสต็อกจริง
-        </p>
-      </div>
+      <PageHeader title="WIP Request / FG Inspection Request" description="เบิก WIP Lot เพื่อส่งตรวจ FG Inspection — Confirm แล้วจึงตัดสต็อกจริง" />
 
       <WipRequestManager
         wipStock={wipStock}

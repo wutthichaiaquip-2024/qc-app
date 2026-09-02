@@ -3,6 +3,7 @@ import type { UserProfile } from "@/types/auth";
 import type { Customer, Item, Site } from "@/types/master-data";
 import type { SalesOrder } from "@/types/sales-order";
 import { SalesOrderManager } from "./SalesOrderManager";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 export default async function SalesOrdersPage() {
   const supabase = await createClient();
@@ -37,12 +38,7 @@ export default async function SalesOrdersPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h1 className="text-xl font-semibold">Sales Orders</h1>
-        <p className="text-sm text-black/50 dark:text-white/50">
-          Free Stock (Available − Reserved) แสดงแบบ real-time ตอนเลือก Part
-        </p>
-      </div>
+      <PageHeader title="Sales Orders" description="Free Stock (Available − Reserved) แสดงแบบ real-time ตอนเลือก Part" />
 
       <SalesOrderManager
         initialOrders={orders.data ?? []}

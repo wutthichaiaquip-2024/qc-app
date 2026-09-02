@@ -23,7 +23,7 @@ export default async function LabelPrintPage({
 
   if (error || !data) {
     return (
-      <div className="p-6 text-sm text-red-600">
+      <div className="p-6 text-sm text-danger">
         ไม่สามารถโหลดข้อมูลป้ายได้: {error?.message ?? "ไม่พบข้อมูล"}
       </div>
     );

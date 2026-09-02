@@ -95,13 +95,13 @@ export function WipRequestManager({
   return (
     <div className="flex flex-col gap-4">
       {canCreate && (
-        <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-2 rounded-lg border border-black/10 dark:border-white/10 p-3">
+        <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-2 rounded-lg border border-border p-3">
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-black/50 dark:text-white/50">WIP Lot</label>
+            <label className="text-xs text-foreground-muted">WIP Lot</label>
             <select
               value={lotId}
               onChange={(e) => setLotId(e.target.value)}
-              className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm"
+              className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm"
             >
               <option value="">—</option>
               {wipStock.map((w) => (
@@ -112,20 +112,20 @@ export function WipRequestManager({
             </select>
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-black/50 dark:text-white/50">Requested Qty</label>
+            <label className="text-xs text-foreground-muted">Requested Qty</label>
             <input
               type="number"
               value={qty}
               onChange={(e) => setQty(e.target.value)}
-              className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm w-28"
+              className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm w-28"
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-black/50 dark:text-white/50">Inspection Plan</label>
+            <label className="text-xs text-foreground-muted">Inspection Plan</label>
             <select
               value={planId}
               onChange={(e) => setPlanId(e.target.value)}
-              className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm"
+              className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm"
             >
               <option value="">—</option>
               {inspectionPlans
@@ -138,30 +138,30 @@ export function WipRequestManager({
             </select>
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-black/50 dark:text-white/50">Purpose</label>
+            <label className="text-xs text-foreground-muted">Purpose</label>
             <input
               value={purpose}
               onChange={(e) => setPurpose(e.target.value)}
-              className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm"
+              className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm"
             />
           </div>
           <button
             type="submit"
             disabled={submitting}
-            className="rounded-md bg-black text-white dark:bg-white dark:text-black px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+            className="rounded-md bg-brand text-brand-foreground hover:brightness-110 px-3 py-1.5 text-sm font-medium disabled:opacity-50"
           >
             {submitting ? "กำลังบันทึก..." : "สร้าง WIP Request"}
           </button>
-          {error && <span className="text-sm text-red-600 w-full">{error}</span>}
+          {error && <span className="text-sm text-danger w-full">{error}</span>}
         </form>
       )}
 
-      {actionError && <p className="text-sm text-red-600">{actionError}</p>}
+      {actionError && <p className="text-sm text-danger">{actionError}</p>}
 
-      <div className="overflow-x-auto rounded-lg border border-black/10 dark:border-white/10">
+      <div className="overflow-x-auto rounded-lg border border-border">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-black/10 dark:border-white/10 text-left text-black/50 dark:text-white/50">
+            <tr className="border-b border-border text-left text-foreground-muted">
               <th className="px-3 py-2 font-medium">Request No.</th>
               <th className="px-3 py-2 font-medium">Part No.</th>
               <th className="px-3 py-2 font-medium">Qty</th>
@@ -173,13 +173,13 @@ export function WipRequestManager({
           <tbody>
             {requests.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-3 py-4 text-black/50 dark:text-white/50">
+                <td colSpan={6} className="px-3 py-4 text-foreground-muted">
                   ยังไม่มี WIP Request
                 </td>
               </tr>
             )}
             {requests.map((r) => (
-              <tr key={r.id} className="border-b border-black/5 dark:border-white/5 last:border-0">
+              <tr key={r.id} className="border-b border-border last:border-0">
                 <td className="px-3 py-2">{r.request_no}</td>
                 <td className="px-3 py-2">{partNo(r.item_id)}</td>
                 <td className="px-3 py-2">{r.requested_qty}</td>
@@ -191,7 +191,7 @@ export function WipRequestManager({
                       {canConfirm && (
                         <button
                           onClick={() => handleConfirm(r.id)}
-                          className="rounded-md border border-black/15 dark:border-white/15 px-2 py-0.5 text-xs hover:bg-black/[.04] dark:hover:bg-white/[.06]"
+                          className="rounded-md border border-border-strong px-2 py-0.5 text-xs hover:bg-surface-muted"
                         >
                           Confirm
                         </button>
@@ -199,7 +199,7 @@ export function WipRequestManager({
                       {canCancel && (
                         <button
                           onClick={() => handleCancel(r.id)}
-                          className="rounded-md border border-black/15 dark:border-white/15 px-2 py-0.5 text-xs hover:bg-black/[.04] dark:hover:bg-white/[.06]"
+                          className="rounded-md border border-border-strong px-2 py-0.5 text-xs hover:bg-surface-muted"
                         >
                           Cancel
                         </button>

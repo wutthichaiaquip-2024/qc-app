@@ -31,11 +31,11 @@ export function RefreshButton() {
       <button
         onClick={handleRefresh}
         disabled={loading}
-        className="rounded-md border border-black/15 dark:border-white/15 px-3 py-1.5 text-sm disabled:opacity-50"
+        className="rounded-md border border-border-strong px-3 py-1.5 text-sm disabled:opacity-50"
       >
         {loading ? "กำลังคำนวณ..." : "Refresh now"}
       </button>
-      {error && <span className="text-sm text-red-600">{error}</span>}
+      {error && <span className="text-sm text-danger">{error}</span>}
     </div>
   );
 }

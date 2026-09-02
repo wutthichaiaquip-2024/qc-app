@@ -109,20 +109,20 @@ export function OqcManager({
   return (
     <div className="flex flex-col gap-4">
       {bySo.size === 0 && (
-        <p className="text-sm text-black/50 dark:text-white/50">ไม่มี Picking ที่รอ OQC</p>
+        <p className="text-sm text-foreground-muted">ไม่มี Picking ที่รอ OQC</p>
       )}
 
       {Array.from(bySo.entries()).map(([pickingId, lines]) => {
         const checklist = getChecklist(pickingId);
         const result = results[pickingId] ?? "PASS";
         return (
-          <div key={pickingId} className="flex flex-col gap-3 rounded-lg border border-black/10 dark:border-white/10 p-3">
+          <div key={pickingId} className="flex flex-col gap-3 rounded-lg border border-border p-3">
             <div className="text-sm font-medium">
               {lines[0].picking_no} — {lines[0].so_no} — {lines[0].customer_code}
             </div>
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-black/50 dark:text-white/50">
+                <tr className="text-left text-foreground-muted">
                   <th className="px-2 py-1">Part No.</th>
                   <th className="px-2 py-1">Lot</th>
                   <th className="px-2 py-1">Location</th>
@@ -131,7 +131,7 @@ export function OqcManager({
               </thead>
               <tbody>
                 {lines.map((l) => (
-                  <tr key={l.lot_id} className="border-t border-black/5 dark:border-white/5">
+                  <tr key={l.lot_id} className="border-t border-border">
                     <td className="px-2 py-1">{l.part_no}</td>
                     <td className="px-2 py-1">{l.lot_no}</td>
                     <td className="px-2 py-1">{l.location_code}</td>
@@ -152,7 +152,7 @@ export function OqcManager({
                         onChange={(e) =>
                           updateChecklistItem(pickingId, item, { result: e.target.value as "PASS" | "FAIL" })
                         }
-                        className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm"
+                        className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm"
                       >
                         <option value="PASS">PASS</option>
                         <option value="FAIL">FAIL</option>
@@ -161,7 +161,7 @@ export function OqcManager({
                         placeholder="Note"
                         value={checklist[item].note}
                         onChange={(e) => updateChecklistItem(pickingId, item, { note: e.target.value })}
-                        className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm flex-1"
+                        className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm flex-1"
                       />
                     </div>
                   ))}
@@ -169,13 +169,13 @@ export function OqcManager({
 
                 <div className="flex flex-wrap items-end gap-2">
                   <div className="flex flex-col gap-1">
-                    <label className="text-xs text-black/50 dark:text-white/50">ผลรวม</label>
+                    <label className="text-xs text-foreground-muted">ผลรวม</label>
                     <select
                       value={result}
                       onChange={(e) =>
                         setResults((prev) => ({ ...prev, [pickingId]: e.target.value as OqcResult }))
                       }
-                      className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm"
+                      className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm"
                     >
                       <option value="PASS">PASS</option>
                       <option value="HOLD">HOLD</option>
@@ -184,13 +184,13 @@ export function OqcManager({
                   </div>
                   {result !== "PASS" && (
                     <div className="flex flex-col gap-1">
-                      <label className="text-xs text-black/50 dark:text-white/50">Target Location (HOLD/REWORK)</label>
+                      <label className="text-xs text-foreground-muted">Target Location (HOLD/REWORK)</label>
                       <select
                         value={targetLocationIds[pickingId] ?? ""}
                         onChange={(e) =>
                           setTargetLocationIds((prev) => ({ ...prev, [pickingId]: e.target.value }))
                         }
-                        className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm"
+                        className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm"
                       >
                         <option value="">—</option>
                         {targetLocations.map((l) => (
@@ -204,7 +204,7 @@ export function OqcManager({
                   <button
                     onClick={() => handleSubmit(pickingId)}
                     disabled={submitting === pickingId}
-                    className="rounded-md bg-black text-white dark:bg-white dark:text-black px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+                    className="rounded-md bg-brand text-brand-foreground hover:brightness-110 px-3 py-1.5 text-sm font-medium disabled:opacity-50"
                   >
                     {submitting === pickingId ? "กำลังบันทึก..." : "Confirm OQC"}
                   </button>
@@ -215,14 +215,14 @@ export function OqcManager({
         );
       })}
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
 
       <div>
         <h2 className="text-lg font-semibold mb-2">OQC History</h2>
-        <div className="overflow-x-auto rounded-lg border border-black/10 dark:border-white/10">
+        <div className="overflow-x-auto rounded-lg border border-border">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-black/10 dark:border-white/10 text-left text-black/50 dark:text-white/50">
+              <tr className="border-b border-border text-left text-foreground-muted">
                 <th className="px-3 py-2 font-medium">OQC No.</th>
                 <th className="px-3 py-2 font-medium">Result</th>
                 <th className="px-3 py-2 font-medium">Inspected At</th>
@@ -231,13 +231,13 @@ export function OqcManager({
             <tbody>
               {inspections.length === 0 && (
                 <tr>
-                  <td colSpan={3} className="px-3 py-4 text-black/50 dark:text-white/50">
+                  <td colSpan={3} className="px-3 py-4 text-foreground-muted">
                     ยังไม่มีการตรวจ OQC
                   </td>
                 </tr>
               )}
               {inspections.map((o) => (
-                <tr key={o.id} className="border-b border-black/5 dark:border-white/5 last:border-0">
+                <tr key={o.id} className="border-b border-border last:border-0">
                   <td className="px-3 py-2">{o.oqc_no}</td>
                   <td className="px-3 py-2">{o.result}</td>
                   <td className="px-3 py-2">{new Date(o.inspected_at).toLocaleString("th-TH")}</td>

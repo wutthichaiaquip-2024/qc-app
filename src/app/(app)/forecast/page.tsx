@@ -3,6 +3,7 @@ import type { UserProfile } from "@/types/auth";
 import type { Customer, Item } from "@/types/master-data";
 import type { ForecastBatch } from "@/types/forecast";
 import { ForecastManager } from "./ForecastManager";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 export default async function ForecastPage() {
   const supabase = await createClient();
@@ -36,12 +37,7 @@ export default async function ForecastPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h1 className="text-xl font-semibold">Customer Forecast</h1>
-        <p className="text-sm text-black/50 dark:text-white/50">
-          Import CSV แล้ว submit เป็น Forecast Batch — ทุก revision เก็บไว้ตลอด ไม่มีการลบของเดิม
-        </p>
-      </div>
+      <PageHeader title="Customer Forecast" description="Import CSV แล้ว submit เป็น Forecast Batch — ทุก revision เก็บไว้ตลอด ไม่มีการลบของเดิม" />
 
       <ForecastManager
         initialBatches={batches.data ?? []}

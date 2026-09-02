@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import type { FgStockRow } from "@/types/fg-stock";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 export default async function FgStockPage() {
   const supabase = await createClient();
@@ -10,17 +11,12 @@ export default async function FgStockPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h1 className="text-xl font-semibold">FG Stock</h1>
-        <p className="text-sm text-black/50 dark:text-white/50">
-          สินค้าสำเร็จที่ผ่าน FG Inspection แล้วเท่านั้น (บังคับด้วย DB constraint)
-        </p>
-      </div>
+      <PageHeader title="FG Stock" description="สินค้าสำเร็จที่ผ่าน FG Inspection แล้วเท่านั้น (บังคับด้วย DB constraint)" />
 
-      <div className="overflow-x-auto rounded-lg border border-black/10 dark:border-white/10">
+      <div className="overflow-x-auto rounded-lg border border-border">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-black/10 dark:border-white/10 text-left text-black/50 dark:text-white/50">
+            <tr className="border-b border-border text-left text-foreground-muted">
               <th className="px-3 py-2 font-medium">Part No.</th>
               <th className="px-3 py-2 font-medium">FG Lot</th>
               <th className="px-3 py-2 font-medium">Location</th>
@@ -36,13 +32,13 @@ export default async function FgStockPage() {
           <tbody>
             {rows.length === 0 && (
               <tr>
-                <td colSpan={10} className="px-3 py-4 text-black/50 dark:text-white/50">
+                <td colSpan={10} className="px-3 py-4 text-foreground-muted">
                   ยังไม่มีสต็อกใน FG
                 </td>
               </tr>
             )}
             {rows.map((r) => (
-              <tr key={`${r.lot_id}-${r.location_id}`} className="border-b border-black/5 dark:border-white/5 last:border-0">
+              <tr key={`${r.lot_id}-${r.location_id}`} className="border-b border-border last:border-0">
                 <td className="px-3 py-2">{r.part_no}</td>
                 <td className="px-3 py-2">{r.lot_no}</td>
                 <td className="px-3 py-2">{r.location_code}</td>

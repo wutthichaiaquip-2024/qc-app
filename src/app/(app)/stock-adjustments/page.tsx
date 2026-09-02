@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { UserProfile } from "@/types/auth";
 import type { StockAdjustment, StockPosition } from "@/types/stock-adjustments";
 import { StockAdjustmentManager } from "./StockAdjustmentManager";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 export default async function StockAdjustmentsPage() {
   const supabase = await createClient();
@@ -30,13 +31,7 @@ export default async function StockAdjustmentsPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h1 className="text-xl font-semibold">Stock Adjustments</h1>
-        <p className="text-sm text-black/50 dark:text-white/50">
-          ปรับปรุงสต็อกกรณีนับจริงไม่ตรง/ของเสียหาย — เป็น Adjustment Transaction ใหม่เสมอ (ledger เดิมแก้ไขไม่ได้)
-          ต้องมีเหตุผลและผู้อนุมัติก่อนตัดสต็อกจริง
-        </p>
-      </div>
+      <PageHeader title="Stock Adjustments" description="ปรับปรุงสต็อกกรณีนับจริงไม่ตรง/ของเสียหาย — เป็น Adjustment Transaction ใหม่เสมอ (ledger เดิมแก้ไขไม่ได้) ต้องมีเหตุผลและผู้อนุมัติก่อนตัดสต็อกจริง" />
 
       <StockAdjustmentManager
         stockRows={(stockRes.data ?? []) as StockPosition[]}

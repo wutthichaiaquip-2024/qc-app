@@ -11,7 +11,7 @@ export function Tabs({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex gap-1 border-b border-black/10 dark:border-white/10">
+      <div className="flex gap-1 border-b border-border">
         {tabs.map((t) => (
           <button
             key={t.key}
@@ -19,7 +19,7 @@ export function Tabs({
             className={`px-3 py-2 text-sm border-b-2 -mb-px ${
               active === t.key
                 ? "border-black dark:border-white font-medium"
-                : "border-transparent text-black/50 dark:text-white/50 hover:text-black dark:hover:text-white"
+                : "border-transparent text-foreground-muted hover:text-black dark:hover:text-white"
             }`}
           >
             {t.label}

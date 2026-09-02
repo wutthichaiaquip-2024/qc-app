@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { DefectCode } from "@/types/iqc";
 import type { Item, Location } from "@/types/master-data";
 import type { WipRequest } from "@/types/wip-request";
+import { FileInput } from "@/components/ui/FileInput";
 import {
   INSPECTION_MODES,
   MEASUREMENT_METHODS,
@@ -170,14 +171,14 @@ export function FgInspectionManager({
   return (
     <div className="flex flex-col gap-4">
       {canCreate && (
-        <div className="flex flex-col gap-3 rounded-lg border border-black/10 dark:border-white/10 p-3">
+        <div className="flex flex-col gap-3 rounded-lg border border-border p-3">
           <div className="flex flex-wrap items-end gap-2">
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-black/50 dark:text-white/50">WIP Request ที่พร้อมตรวจ</label>
+              <label className="text-xs text-foreground-muted">WIP Request ที่พร้อมตรวจ</label>
               <select
                 value={wrId}
                 onChange={(e) => setWrId(e.target.value)}
-                className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm"
+                className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm"
               >
                 <option value="">—</option>
                 {pendingRequests.map((r) => (
@@ -188,11 +189,11 @@ export function FgInspectionManager({
               </select>
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-black/50 dark:text-white/50">Inspection Mode</label>
+              <label className="text-xs text-foreground-muted">Inspection Mode</label>
               <select
                 value={mode}
                 onChange={(e) => setMode(e.target.value as InspectionMode)}
-                className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm"
+                className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm"
               >
                 {INSPECTION_MODES.map((m) => (
                   <option key={m} value={m}>
@@ -202,11 +203,11 @@ export function FgInspectionManager({
               </select>
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-black/50 dark:text-white/50">Measurement Method</label>
+              <label className="text-xs text-foreground-muted">Measurement Method</label>
               <select
                 value={method}
                 onChange={(e) => setMethod(e.target.value as MeasurementMethod)}
-                className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm"
+                className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm"
               >
                 {MEASUREMENT_METHODS.map((m) => (
                   <option key={m} value={m}>
@@ -221,18 +222,18 @@ export function FgInspectionManager({
             <>
               <div className="flex flex-wrap gap-3">
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-black/50 dark:text-white/50">Qty Pass</label>
+                  <label className="text-xs text-foreground-muted">Qty Pass</label>
                   <input
                     type="number"
                     value={qtyPass}
                     onChange={(e) => setQtyPass(e.target.value)}
-                    className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm w-24"
+                    className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm w-24"
                   />
                   {Number(qtyPass) > 0 && (
                     <select
                       value={fgLocationId}
                       onChange={(e) => setFgLocationId(e.target.value)}
-                      className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm"
+                      className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm"
                     >
                       <option value="">FG Location</option>
                       {siteLocations("FG").map((l) => (
@@ -244,18 +245,18 @@ export function FgInspectionManager({
                   )}
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-black/50 dark:text-white/50">Qty Hold</label>
+                  <label className="text-xs text-foreground-muted">Qty Hold</label>
                   <input
                     type="number"
                     value={qtyHold}
                     onChange={(e) => setQtyHold(e.target.value)}
-                    className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm w-24"
+                    className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm w-24"
                   />
                   {Number(qtyHold) > 0 && (
                     <select
                       value={holdLocationId}
                       onChange={(e) => setHoldLocationId(e.target.value)}
-                      className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm"
+                      className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm"
                     >
                       <option value="">HOLD Location</option>
                       {siteLocations("HOLD").map((l) => (
@@ -267,18 +268,18 @@ export function FgInspectionManager({
                   )}
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-black/50 dark:text-white/50">Qty NG</label>
+                  <label className="text-xs text-foreground-muted">Qty NG</label>
                   <input
                     type="number"
                     value={qtyNg}
                     onChange={(e) => setQtyNg(e.target.value)}
-                    className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm w-24"
+                    className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm w-24"
                   />
                   {Number(qtyNg) > 0 && (
                     <select
                       value={ngLocationId}
                       onChange={(e) => setNgLocationId(e.target.value)}
-                      className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm"
+                      className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm"
                     >
                       <option value="">NG Location</option>
                       {siteLocations("NG").map((l) => (
@@ -292,20 +293,20 @@ export function FgInspectionManager({
               </div>
 
               <div className="flex flex-col gap-2">
-                <span className="text-xs text-black/50 dark:text-white/50">Characteristics / Measurement</span>
+                <span className="text-xs text-foreground-muted">Characteristics / Measurement</span>
                 {characteristics.map((c, i) => (
                   <div key={i} className="flex flex-wrap items-end gap-2">
                     <input
                       placeholder="Characteristic"
                       value={c.characteristic_name}
                       onChange={(e) => updateCharacteristic(i, { characteristic_name: e.target.value })}
-                      className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm"
+                      className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm"
                     />
                     <input
                       placeholder="Spec"
                       value={c.spec_value}
                       onChange={(e) => updateCharacteristic(i, { spec_value: e.target.value })}
-                      className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm w-28"
+                      className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm w-28"
                     />
                     <input
                       placeholder="Measured"
@@ -313,37 +314,37 @@ export function FgInspectionManager({
                       step="0.01"
                       value={c.measured_value}
                       onChange={(e) => updateCharacteristic(i, { measured_value: e.target.value })}
-                      className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm w-24"
+                      className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm w-24"
                     />
                     <input
                       placeholder="Unit"
                       value={c.unit}
                       onChange={(e) => updateCharacteristic(i, { unit: e.target.value })}
-                      className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm w-16"
+                      className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm w-16"
                     />
                     <select
                       value={c.result}
                       onChange={(e) => updateCharacteristic(i, { result: e.target.value as "PASS" | "NG" })}
-                      className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm"
+                      className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm"
                     >
                       <option value="PASS">PASS</option>
                       <option value="NG">NG</option>
                     </select>
                   </div>
                 ))}
-                <button type="button" onClick={addCharacteristic} className="self-start text-sm text-black/50 dark:text-white/50 hover:text-black dark:hover:text-white">
+                <button type="button" onClick={addCharacteristic} className="self-start text-sm text-foreground-muted hover:text-black dark:hover:text-white">
                   + เพิ่ม Characteristic
                 </button>
               </div>
 
               <div className="flex flex-col gap-2">
-                <span className="text-xs text-black/50 dark:text-white/50">Defect Details</span>
+                <span className="text-xs text-foreground-muted">Defect Details</span>
                 {defects.map((d, i) => (
                   <div key={i} className="flex flex-wrap items-end gap-2">
                     <select
                       value={d.defect_code_id}
                       onChange={(e) => updateDefect(i, { defect_code_id: e.target.value })}
-                      className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm"
+                      className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm"
                     >
                       <option value="">Defect Code</option>
                       {defectCodes.map((dc) => (
@@ -357,29 +358,28 @@ export function FgInspectionManager({
                       type="number"
                       value={d.qty}
                       onChange={(e) => updateDefect(i, { qty: e.target.value })}
-                      className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm w-20"
+                      className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm w-20"
                     />
                     <textarea
                       placeholder="Condition Note (3 Gen: บรรยายลักษณะจริง)"
                       value={d.condition_note}
                       onChange={(e) => updateDefect(i, { condition_note: e.target.value })}
-                      className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm flex-1 min-w-[14rem]"
+                      className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm flex-1 min-w-[14rem]"
                       rows={1}
                     />
-                    <input
-                      type="file"
+                    <FileInput
                       accept="image/png,image/jpeg,image/webp"
                       disabled={d.uploading}
                       onChange={(e) => {
                         const file = e.target.files?.[0];
                         if (file) handlePhotoUpload(i, file);
                       }}
-                      className="text-xs"
+                      className="text-xs py-1"
                     />
-                    {d.photo_path && <span className="text-xs text-green-600">แนบรูปแล้ว</span>}
+                    {d.photo_path && <span className="text-xs text-success">แนบรูปแล้ว</span>}
                   </div>
                 ))}
-                <button type="button" onClick={addDefect} className="self-start text-sm text-black/50 dark:text-white/50 hover:text-black dark:hover:text-white">
+                <button type="button" onClick={addDefect} className="self-start text-sm text-foreground-muted hover:text-black dark:hover:text-white">
                   + เพิ่ม Defect
                 </button>
               </div>
@@ -387,21 +387,21 @@ export function FgInspectionManager({
               <button
                 onClick={handleSubmit}
                 disabled={submitting}
-                className="self-start rounded-md bg-black text-white dark:bg-white dark:text-black px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+                className="self-start rounded-md bg-brand text-brand-foreground hover:brightness-110 px-3 py-1.5 text-sm font-medium disabled:opacity-50"
               >
                 {submitting ? "กำลังบันทึก..." : "Confirm FG Inspection"}
               </button>
             </>
           )}
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-danger">{error}</p>}
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-lg border border-black/10 dark:border-white/10">
+      <div className="overflow-x-auto rounded-lg border border-border">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-black/10 dark:border-white/10 text-left text-black/50 dark:text-white/50">
+            <tr className="border-b border-border text-left text-foreground-muted">
               <th className="px-3 py-2 font-medium">FG No.</th>
               <th className="px-3 py-2 font-medium">Part No.</th>
               <th className="px-3 py-2 font-medium">Mode</th>
@@ -413,13 +413,13 @@ export function FgInspectionManager({
           <tbody>
             {inspections.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-3 py-4 text-black/50 dark:text-white/50">
+                <td colSpan={6} className="px-3 py-4 text-foreground-muted">
                   ยังไม่มีการตรวจ FG
                 </td>
               </tr>
             )}
             {inspections.map((i) => (
-              <tr key={i.id} className="border-b border-black/5 dark:border-white/5 last:border-0">
+              <tr key={i.id} className="border-b border-border last:border-0">
                 <td className="px-3 py-2">{i.fg_no}</td>
                 <td className="px-3 py-2">{partNo(i.item_id)}</td>
                 <td className="px-3 py-2">{i.inspection_mode}</td>

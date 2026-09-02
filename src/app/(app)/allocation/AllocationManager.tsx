@@ -115,16 +115,16 @@ export function AllocationManager({
   return (
     <div className="flex flex-col gap-4">
       {canCreate && (
-        <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-2 rounded-lg border border-black/10 dark:border-white/10 p-3">
+        <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-2 rounded-lg border border-border p-3">
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-black/50 dark:text-white/50">SO Line ที่รอ allocate</label>
+            <label className="text-xs text-foreground-muted">SO Line ที่รอ allocate</label>
             <select
               value={soLineId}
               onChange={(e) => {
                 setSoLineId(e.target.value);
                 setManualLotId("");
               }}
-              className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm min-w-[16rem]"
+              className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm min-w-[16rem]"
             >
               <option value="">—</option>
               {lines.map((l) => (
@@ -135,11 +135,11 @@ export function AllocationManager({
             </select>
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-black/50 dark:text-white/50">Method</label>
+            <label className="text-xs text-foreground-muted">Method</label>
             <select
               value={method}
               onChange={(e) => setMethod(e.target.value as AllocationMethod)}
-              className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm"
+              className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm"
             >
               {ALLOCATION_METHODS.map((m) => (
                 <option key={m} value={m}>
@@ -149,21 +149,21 @@ export function AllocationManager({
             </select>
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-black/50 dark:text-white/50">Qty</label>
+            <label className="text-xs text-foreground-muted">Qty</label>
             <input
               type="number"
               value={qty}
               onChange={(e) => setQty(e.target.value)}
-              className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm w-24"
+              className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm w-24"
             />
           </div>
           {method === "MANUAL" && (
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-black/50 dark:text-white/50">Lot (FG)</label>
+              <label className="text-xs text-foreground-muted">Lot (FG)</label>
               <select
                 value={manualLotId}
                 onChange={(e) => setManualLotId(e.target.value)}
-                className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm"
+                className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm"
               >
                 <option value="">—</option>
                 {manualCandidates.map((c) => (
@@ -177,18 +177,18 @@ export function AllocationManager({
           <button
             type="submit"
             disabled={submitting || !soLineId}
-            className="rounded-md bg-black text-white dark:bg-white dark:text-black px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+            className="rounded-md bg-brand text-brand-foreground hover:brightness-110 px-3 py-1.5 text-sm font-medium disabled:opacity-50"
           >
             {submitting ? "กำลังจอง..." : "Allocate"}
           </button>
-          {error && <span className="text-sm text-red-600 w-full">{error}</span>}
+          {error && <span className="text-sm text-danger w-full">{error}</span>}
         </form>
       )}
 
-      <div className="overflow-x-auto rounded-lg border border-black/10 dark:border-white/10">
+      <div className="overflow-x-auto rounded-lg border border-border">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-black/10 dark:border-white/10 text-left text-black/50 dark:text-white/50">
+            <tr className="border-b border-border text-left text-foreground-muted">
               <th className="px-3 py-2 font-medium">SO No.</th>
               <th className="px-3 py-2 font-medium">Customer</th>
               <th className="px-3 py-2 font-medium">Part No.</th>
@@ -200,7 +200,7 @@ export function AllocationManager({
           <tbody>
             {lines.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-3 py-4 text-black/50 dark:text-white/50">
+                <td colSpan={6} className="px-3 py-4 text-foreground-muted">
                   ไม่มี SO Line ที่รอ allocate
                 </td>
               </tr>
@@ -208,7 +208,7 @@ export function AllocationManager({
             {lines.map((l) => (
               <Fragment key={l.so_line_id}>
                 <tr
-                  className="border-b border-black/5 dark:border-white/5 cursor-pointer"
+                  className="border-b border-border cursor-pointer"
                   onClick={() => toggleExpand(l.so_line_id)}
                 >
                   <td className="px-3 py-2">{l.so_no}</td>
@@ -220,10 +220,10 @@ export function AllocationManager({
                 </tr>
                 {expanded === l.so_line_id && (
                   <tr>
-                    <td colSpan={6} className="px-3 py-2 bg-black/[.02] dark:bg-white/[.03]">
+                    <td colSpan={6} className="px-3 py-2 bg-surface-muted">
                       <table className="w-full text-xs">
                         <thead>
-                          <tr className="text-left text-black/50 dark:text-white/50">
+                          <tr className="text-left text-foreground-muted">
                             <th className="px-2 py-1">Method</th>
                             <th className="px-2 py-1">Qty</th>
                             <th className="px-2 py-1">Allocated At</th>
@@ -240,7 +240,7 @@ export function AllocationManager({
                                 {canRelease && (
                                   <button
                                     onClick={() => handleRelease(a.id, l.so_line_id)}
-                                    className="text-red-600 underline"
+                                    className="text-danger underline"
                                   >
                                     Release
                                   </button>

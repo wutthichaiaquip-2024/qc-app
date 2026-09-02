@@ -28,7 +28,7 @@ export function ScanInput({
         }
       }}
       placeholder={placeholder ?? "สแกนบาร์โค้ด/QR หรือพิมพ์แล้วกด Enter"}
-      className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm"
+      className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm"
     />
   );
 }

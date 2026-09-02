@@ -87,13 +87,13 @@ export function StockAdjustmentManager({
   return (
     <div className="flex flex-col gap-4">
       {canCreate && (
-        <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-2 rounded-lg border border-black/10 dark:border-white/10 p-3">
+        <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-2 rounded-lg border border-border p-3">
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-black/50 dark:text-white/50">Lot @ Location</label>
+            <label className="text-xs text-foreground-muted">Lot @ Location</label>
             <select
               value={positionKeyValue}
               onChange={(e) => setPositionKeyValue(e.target.value)}
-              className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm min-w-[16rem]"
+              className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm min-w-[16rem]"
             >
               <option value="">—</option>
               {stockRows.map((p) => (
@@ -104,41 +104,41 @@ export function StockAdjustmentManager({
             </select>
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-black/50 dark:text-white/50">Qty Delta (+/-)</label>
+            <label className="text-xs text-foreground-muted">Qty Delta (+/-)</label>
             <input
               type="number"
               value={qtyDelta}
               onChange={(e) => setQtyDelta(e.target.value)}
               placeholder="เช่น -5 หรือ 3"
-              className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm w-28"
+              className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm w-28"
             />
           </div>
           <div className="flex flex-col gap-1 flex-1 min-w-[12rem]">
-            <label className="text-xs text-black/50 dark:text-white/50">เหตุผล</label>
+            <label className="text-xs text-foreground-muted">เหตุผล</label>
             <input
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="เช่น นับจริงไม่ตรง, ของเสียหาย"
-              className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm"
+              className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm"
             />
           </div>
           <button
             type="submit"
             disabled={submitting}
-            className="rounded-md bg-black text-white dark:bg-white dark:text-black px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+            className="rounded-md bg-brand text-brand-foreground hover:brightness-110 px-3 py-1.5 text-sm font-medium disabled:opacity-50"
           >
             {submitting ? "กำลังบันทึก..." : "ขอ Adjustment"}
           </button>
-          {error && <span className="text-sm text-red-600 w-full">{error}</span>}
+          {error && <span className="text-sm text-danger w-full">{error}</span>}
         </form>
       )}
 
-      {actionError && <p className="text-sm text-red-600">{actionError}</p>}
+      {actionError && <p className="text-sm text-danger">{actionError}</p>}
 
-      <div className="overflow-x-auto rounded-lg border border-black/10 dark:border-white/10">
+      <div className="overflow-x-auto rounded-lg border border-border">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-black/10 dark:border-white/10 text-left text-black/50 dark:text-white/50">
+            <tr className="border-b border-border text-left text-foreground-muted">
               <th className="px-3 py-2 font-medium">Adjustment No.</th>
               <th className="px-3 py-2 font-medium">Part No.</th>
               <th className="px-3 py-2 font-medium">Lot No.</th>
@@ -152,18 +152,18 @@ export function StockAdjustmentManager({
           <tbody>
             {adjustments.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-3 py-4 text-black/50 dark:text-white/50">
+                <td colSpan={8} className="px-3 py-4 text-foreground-muted">
                   ยังไม่มี Stock Adjustment
                 </td>
               </tr>
             )}
             {adjustments.map((a) => (
-              <tr key={a.id} className="border-b border-black/5 dark:border-white/5 last:border-0">
+              <tr key={a.id} className="border-b border-border last:border-0">
                 <td className="px-3 py-2">{a.adjustment_no}</td>
                 <td className="px-3 py-2">{a.part_no}</td>
                 <td className="px-3 py-2">{a.lot_no}</td>
                 <td className="px-3 py-2">{a.location_code}</td>
-                <td className={`px-3 py-2 ${a.qty_delta < 0 ? "text-red-600" : "text-green-600"}`}>
+                <td className={`px-3 py-2 ${a.qty_delta < 0 ? "text-danger" : "text-success"}`}>
                   {a.qty_delta > 0 ? `+${a.qty_delta}` : a.qty_delta}
                 </td>
                 <td className="px-3 py-2">{a.reason}</td>
@@ -174,7 +174,7 @@ export function StockAdjustmentManager({
                       {canApprove && (
                         <button
                           onClick={() => handleApprove(a.id)}
-                          className="rounded-md border border-black/15 dark:border-white/15 px-2 py-0.5 text-xs hover:bg-black/[.04] dark:hover:bg-white/[.06]"
+                          className="rounded-md border border-border-strong px-2 py-0.5 text-xs hover:bg-surface-muted"
                         >
                           Approve
                         </button>
@@ -182,7 +182,7 @@ export function StockAdjustmentManager({
                       {canReject && (
                         <button
                           onClick={() => handleReject(a.id)}
-                          className="rounded-md border border-black/15 dark:border-white/15 px-2 py-0.5 text-xs hover:bg-black/[.04] dark:hover:bg-white/[.06]"
+                          className="rounded-md border border-border-strong px-2 py-0.5 text-xs hover:bg-surface-muted"
                         >
                           Reject
                         </button>

@@ -13,7 +13,7 @@ function flattenUpstream(g: LotGenealogy): LotGenealogy[] {
 
 function Chip({ children }: { children: React.ReactNode }) {
   return (
-    <span className="rounded-full bg-black/10 dark:bg-white/10 px-2 py-1 text-xs whitespace-nowrap">
+    <span className="rounded-full bg-surface-muted px-2 py-1 text-xs whitespace-nowrap">
       {children}
     </span>
   );
@@ -60,12 +60,12 @@ export function TraceabilityViewer() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-1 max-w-sm">
-        <label className="text-xs text-black/50 dark:text-white/50">Lot No.</label>
+        <label className="text-xs text-foreground-muted">Lot No.</label>
         <ScanInput onScan={lookup} placeholder="เช่น LOT-2026-00001" />
       </div>
 
-      {loading && <p className="text-sm text-black/50 dark:text-white/50">กำลังค้นหา...</p>}
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {loading && <p className="text-sm text-foreground-muted">กำลังค้นหา...</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
 
       {genealogy && (
         <div className="flex flex-col gap-4">
@@ -76,7 +76,7 @@ export function TraceabilityViewer() {
 
           <div className="flex flex-col gap-3">
             {stages.map((stage, i) => (
-              <div key={stage.lot_id} className="rounded-lg border border-black/10 dark:border-white/10 p-3">
+              <div key={stage.lot_id} className="rounded-lg border border-border p-3">
                 <div className="text-sm font-medium mb-2">
                   Lot {i + 1}: {stage.lot_no}
                 </div>
@@ -128,7 +128,7 @@ export function TraceabilityViewer() {
           </div>
 
           {last && last.downstream_allocations.length > 0 && (
-            <div className="rounded-lg border border-black/10 dark:border-white/10 p-3">
+            <div className="rounded-lg border border-border p-3">
               <div className="text-sm font-medium mb-2">ปลายทาง (Sales / Shipment)</div>
               <div className="flex flex-col gap-2">
                 {last.downstream_allocations.map((a, i) => (

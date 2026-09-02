@@ -3,6 +3,7 @@ import type { UserProfile } from "@/types/auth";
 import type { OpenSoLine } from "@/types/allocation";
 import type { FgStockRow } from "@/types/fg-stock";
 import { AllocationManager } from "./AllocationManager";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 export default async function AllocationPage() {
   const supabase = await createClient();
@@ -31,12 +32,7 @@ export default async function AllocationPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h1 className="text-xl font-semibold">Stock Allocation</h1>
-        <p className="text-sm text-black/50 dark:text-white/50">
-          FIFO / FEFO / Manual — allocate เฉพาะ FG ที่ PASS เท่านั้น
-        </p>
-      </div>
+      <PageHeader title="Stock Allocation" description="FIFO / FEFO / Manual — allocate เฉพาะ FG ที่ PASS เท่านั้น" />
 
       <AllocationManager
         openLines={(openLinesRes.data ?? []) as OpenSoLine[]}

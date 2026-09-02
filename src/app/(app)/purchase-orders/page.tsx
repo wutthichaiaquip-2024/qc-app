@@ -3,6 +3,7 @@ import type { UserProfile } from "@/types/auth";
 import type { Item, Supplier } from "@/types/master-data";
 import type { PurchaseOrder } from "@/types/purchase-order";
 import { PurchaseOrderManager } from "./PurchaseOrderManager";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 export default async function PurchaseOrdersPage() {
   const supabase = await createClient();
@@ -36,12 +37,7 @@ export default async function PurchaseOrdersPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h1 className="text-xl font-semibold">Purchase Orders</h1>
-        <p className="text-sm text-black/50 dark:text-white/50">
-          สร้าง PO พร้อมแนบไฟล์สเปก/แบบวาดต่อ Line ได้
-        </p>
-      </div>
+      <PageHeader title="Purchase Orders" description="สร้าง PO พร้อมแนบไฟล์สเปก/แบบวาดต่อ Line ได้" />
 
       <PurchaseOrderManager
         initialOrders={orders.data ?? []}

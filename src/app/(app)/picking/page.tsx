@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { UserProfile } from "@/types/auth";
 import type { PickingQueueItem, Picking } from "@/types/picking";
 import { PickingManager } from "./PickingManager";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 export default async function PickingPage() {
   const supabase = await createClient();
@@ -34,12 +35,7 @@ export default async function PickingPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h1 className="text-xl font-semibold">Picking</h1>
-        <p className="text-sm text-black/50 dark:text-white/50">
-          สแกน Lot เพื่อยืนยันว่าหยิบถูกล็อต ก่อน Confirm Picking
-        </p>
-      </div>
+      <PageHeader title="Picking" description="สแกน Lot เพื่อยืนยันว่าหยิบถูกล็อต ก่อน Confirm Picking" />
 
       <PickingManager
         queue={(queueRes.data ?? []) as PickingQueueItem[]}

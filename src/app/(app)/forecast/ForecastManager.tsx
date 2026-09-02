@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { parseCsv } from "@/lib/csv";
 import { FORECAST_TRANSITIONS, type ForecastBatch, type ForecastLine, type ForecastStatus } from "@/types/forecast";
 import type { Customer, Item } from "@/types/master-data";
+import { FileInput } from "@/components/ui/FileInput";
 
 type LineDraft = { item_id: string; forecast_month: string; forecast_qty: number };
 
@@ -161,14 +162,14 @@ export function ForecastManager({
   return (
     <div className="flex flex-col gap-4">
       {canCreate && (
-        <div className="flex flex-col gap-3 rounded-lg border border-black/10 dark:border-white/10 p-3">
+        <div className="flex flex-col gap-3 rounded-lg border border-border p-3">
           <div className="flex flex-wrap items-end gap-2">
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-black/50 dark:text-white/50">Customer</label>
+              <label className="text-xs text-foreground-muted">Customer</label>
               <select
                 value={customerId}
                 onChange={(e) => setCustomerId(e.target.value)}
-                className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-2 py-1 text-sm"
+                className="rounded-md border border-border-strong bg-transparent px-2 py-1 text-sm"
               >
                 <option value="">—</option>
                 {customers.map((c) => (
@@ -179,26 +180,26 @@ export function ForecastManager({
               </select>
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-black/50 dark:text-white/50">
+              <label className="text-xs text-foreground-muted">
                 CSV (header: part_no, forecast_month, forecast_qty)
               </label>
-              <input ref={fileRef} type="file" accept=".csv,text/csv" onChange={handleFile} className="text-sm" />
+              <FileInput ref={fileRef} accept=".csv,text/csv" onChange={handleFile} />
             </div>
           </div>
 
           {parseError && (
-            <pre className="text-sm text-red-600 whitespace-pre-wrap">{parseError}</pre>
+            <pre className="text-sm text-danger whitespace-pre-wrap">{parseError}</pre>
           )}
 
           {preview && (
             <div className="flex flex-col gap-2">
-              <p className="text-sm text-black/50 dark:text-white/50">
+              <p className="text-sm text-foreground-muted">
                 Preview {preview.length} บรรทัด — ตรวจสอบก่อนกด Submit
               </p>
-              <div className="overflow-x-auto rounded-md border border-black/10 dark:border-white/10 max-h-48 overflow-y-auto">
+              <div className="overflow-x-auto rounded-md border border-border max-h-48 overflow-y-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="text-left text-black/50 dark:text-white/50">
+                    <tr className="text-left text-foreground-muted">
                       <th className="px-2 py-1">Part No.</th>
                       <th className="px-2 py-1">Month</th>
                       <th className="px-2 py-1">Qty</th>
@@ -206,7 +207,7 @@ export function ForecastManager({
                   </thead>
                   <tbody>
                     {preview.map((l, i) => (
-                      <tr key={i} className="border-t border-black/5 dark:border-white/5">
+                      <tr key={i} className="border-t border-border">
                         <td className="px-2 py-1">{items.find((it) => it.id === l.item_id)?.part_no}</td>
                         <td className="px-2 py-1">{l.forecast_month}</td>
                         <td className="px-2 py-1">{l.forecast_qty}</td>
@@ -218,20 +219,20 @@ export function ForecastManager({
               <button
                 onClick={handleSubmit}
                 disabled={!customerId || submitting}
-                className="self-start rounded-md bg-black text-white dark:bg-white dark:text-black px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+                className="self-start rounded-md bg-brand text-brand-foreground hover:brightness-110 px-3 py-1.5 text-sm font-medium disabled:opacity-50"
               >
                 {submitting ? "กำลังบันทึก..." : "Submit Forecast Batch"}
               </button>
-              {submitError && <p className="text-sm text-red-600">{submitError}</p>}
+              {submitError && <p className="text-sm text-danger">{submitError}</p>}
             </div>
           )}
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-lg border border-black/10 dark:border-white/10">
+      <div className="overflow-x-auto rounded-lg border border-border">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-black/10 dark:border-white/10 text-left text-black/50 dark:text-white/50">
+            <tr className="border-b border-border text-left text-foreground-muted">
               <th className="px-3 py-2 font-medium">Forecast No.</th>
               <th className="px-3 py-2 font-medium">Customer</th>
               <th className="px-3 py-2 font-medium">Rev.</th>
@@ -242,7 +243,7 @@ export function ForecastManager({
           <tbody>
             {batches.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-3 py-4 text-black/50 dark:text-white/50">
+                <td colSpan={5} className="px-3 py-4 text-foreground-muted">
                   ยังไม่มี Forecast
                 </td>
               </tr>
@@ -250,7 +251,7 @@ export function ForecastManager({
             {batches.map((b) => (
               <Fragment key={b.id}>
                 <tr
-                  className="border-b border-black/5 dark:border-white/5 cursor-pointer"
+                  className="border-b border-border cursor-pointer"
                   onClick={() => toggleExpand(b.id)}
                 >
                   <td className="px-3 py-2">{b.forecast_no}</td>
@@ -263,7 +264,7 @@ export function ForecastManager({
                         <button
                           key={next}
                           onClick={() => handleTransition(b.id, next)}
-                          className="rounded-md border border-black/15 dark:border-white/15 px-2 py-0.5 text-xs hover:bg-black/[.04] dark:hover:bg-white/[.06]"
+                          className="rounded-md border border-border-strong px-2 py-0.5 text-xs hover:bg-surface-muted"
                         >
                           → {next}
                         </button>
@@ -273,10 +274,10 @@ export function ForecastManager({
                 </tr>
                 {expanded === b.id && (
                   <tr>
-                    <td colSpan={5} className="px-3 py-2 bg-black/[.02] dark:bg-white/[.03]">
+                    <td colSpan={5} className="px-3 py-2 bg-surface-muted">
                       <table className="w-full text-xs">
                         <thead>
-                          <tr className="text-left text-black/50 dark:text-white/50">
+                          <tr className="text-left text-foreground-muted">
                             <th className="px-2 py-1">Part No.</th>
                             <th className="px-2 py-1">Month</th>
                             <th className="px-2 py-1">Qty</th>

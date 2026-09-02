@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { parseCsv } from "@/lib/csv";
+import { FileInput } from "@/components/ui/FileInput";
 
 export type ImportColumn = { key: string; label: string; required?: boolean };
 
@@ -106,28 +107,28 @@ export function CsvImportPanel({
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-black/10 dark:border-white/10 p-3">
+    <div className="flex flex-col gap-3 rounded-lg border border-border p-3">
       <div>
         <h3 className="text-sm font-semibold">{title}</h3>
-        <p className="text-xs text-black/50 dark:text-white/50">{description}</p>
-        <p className="text-xs text-black/40 dark:text-white/40 mt-1">
+        <p className="text-xs text-foreground-muted">{description}</p>
+        <p className="text-xs text-foreground-muted mt-1">
           Header: {columns.map((c) => c.key).join(", ")}
         </p>
       </div>
 
-      <input ref={fileRef} type="file" accept=".csv,text/csv" onChange={handleFile} className="text-sm" />
+      <FileInput ref={fileRef} accept=".csv,text/csv" onChange={handleFile} />
 
-      {parseError && <pre className="text-sm text-red-600 whitespace-pre-wrap">{parseError}</pre>}
+      {parseError && <pre className="text-sm text-danger whitespace-pre-wrap">{parseError}</pre>}
 
       {preview && (
         <div className="flex flex-col gap-2">
-          <p className="text-sm text-black/50 dark:text-white/50">
+          <p className="text-sm text-foreground-muted">
             Preview {preview.length} แถว — ตรวจสอบก่อนกด Import (ถ้ามีแถวใดผิดพลาด จะไม่มีข้อมูลเข้าตารางเลยทั้งไฟล์)
           </p>
-          <div className="overflow-x-auto rounded-md border border-black/10 dark:border-white/10 max-h-48 overflow-y-auto">
+          <div className="overflow-x-auto rounded-md border border-border max-h-48 overflow-y-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-black/50 dark:text-white/50">
+                <tr className="text-left text-foreground-muted">
                   {columns.map((c) => (
                     <th key={c.key} className="px-2 py-1 whitespace-nowrap">
                       {c.label}
@@ -137,7 +138,7 @@ export function CsvImportPanel({
               </thead>
               <tbody>
                 {preview.map((r, i) => (
-                  <tr key={i} className="border-t border-black/5 dark:border-white/5">
+                  <tr key={i} className="border-t border-border">
                     {columns.map((c) => (
                       <td key={c.key} className="px-2 py-1 whitespace-nowrap">
                         {r[c.key] || "—"}
@@ -151,15 +152,15 @@ export function CsvImportPanel({
           <button
             onClick={handleSubmit}
             disabled={submitting}
-            className="self-start rounded-md bg-black text-white dark:bg-white dark:text-black px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+            className="self-start rounded-md bg-brand text-brand-foreground hover:brightness-110 px-3 py-1.5 text-sm font-medium disabled:opacity-50"
           >
             {submitting ? "กำลัง Import..." : `Import ${preview.length} แถว`}
           </button>
-          {submitError && <p className="text-sm text-red-600">{submitError}</p>}
+          {submitError && <p className="text-sm text-danger">{submitError}</p>}
         </div>
       )}
 
-      {result !== null && <p className="text-sm text-green-600">Import สำเร็จ {result} แถว</p>}
+      {result !== null && <p className="text-sm text-success">Import สำเร็จ {result} แถว</p>}
     </div>
   );
 }

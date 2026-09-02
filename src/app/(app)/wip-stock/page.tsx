@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import type { WipStockRow } from "@/types/wip-stock";
 import { WipStockTable } from "./WipStockTable";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 export default async function WipStockPage() {
   const supabase = await createClient();
@@ -10,12 +11,7 @@ export default async function WipStockPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h1 className="text-xl font-semibold">WIP Stock</h1>
-        <p className="text-sm text-black/50 dark:text-white/50">
-          สต็อกที่ผ่าน IQC แล้วอยู่ในคลังพักงานระหว่างผลิต — คลิกแถวเพื่อดู Traceability
-        </p>
-      </div>
+      <PageHeader title="WIP Stock" description="สต็อกที่ผ่าน IQC แล้วอยู่ในคลังพักงานระหว่างผลิต — คลิกแถวเพื่อดู Traceability" />
 
       <WipStockTable rows={rows} />
     </div>

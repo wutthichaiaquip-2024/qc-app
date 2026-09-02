@@ -4,6 +4,7 @@ import type { Item, Location, Supplier } from "@/types/master-data";
 import type { PurchaseOrder } from "@/types/purchase-order";
 import type { GoodsReceipt } from "@/types/receiving";
 import { ReceivingManager } from "./ReceivingManager";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 export default async function ReceivingPage() {
   const supabase = await createClient();
@@ -52,12 +53,7 @@ export default async function ReceivingPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h1 className="text-xl font-semibold">Receiving</h1>
-        <p className="text-sm text-black/50 dark:text-white/50">
-          สแกน PO แล้วยืนยันรับของเข้า — ระบบสร้าง Lot ใหม่ + Stock Transaction ให้อัตโนมัติ
-        </p>
-      </div>
+      <PageHeader title="Receiving" description="สแกน PO แล้วยืนยันรับของเข้า — ระบบสร้าง Lot ใหม่ + Stock Transaction ให้อัตโนมัติ" />
 
       <ReceivingManager
         initialReceipts={receiptRows}
