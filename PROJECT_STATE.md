@@ -323,6 +323,20 @@ Done:
 - **A side effect worth knowing about**: the concurrency and adjustment scenarios deliberately wrote real `stock_transactions` rows to prove the real trigger holds under real load — so, unlike every other phase, that test data (`RPT23TEST-*`) **cannot be fully cleaned up**: `DELETE FROM stock_transactions` was correctly rejected, and everything else in that chain is FK-referenced by it. Left in place, clearly tagged, as a genuine demonstration of the rule rather than an oversight — see `TEST_PLAN.md` for the full explanation.
 - Build + typecheck + lint pass, dev server starts clean, no runtime errors on `/stock-adjustments` (pre-auth redirect). **UI not yet verified in browser with a real session** — same standing caveat as every phase.
 
+## Phase 24 — Production Release: สถานะ **บางส่วน (สิ่งที่ script/verify ได้ทำและ verify แล้ว, PITR/Monitoring ต้องให้ user ทำเองผ่าน Dashboard)**
+
+Full detail in **`PRODUCTION_RELEASE.md`** (new file, this phase) — summary only here. This project (`mmkprjuiiwzttalmuips`) is now production itself, confirmed with the user (AskUserQuestion) rather than provisioning a separate project.
+
+Done:
+- **RLS coverage audit**: `audit_rls_coverage()` (ADMIN-only), also surfaced in `/data-migration`. Run against the real DB: all 49 `public` tables have RLS enabled; 45 have real policies; the 4 with `policy_count = 0` (`document_number_config`/`_counters`, `forecast_revision_counters`, `forecast_line_version_counters`) are internal atomic counters deliberately locked via `REVOKE ALL` instead of policies — reviewed and correct, not a gap. Phase 18's materialized views aren't covered by this table-only audit (Postgres doesn't support RLS on them at all) — they're protected by `REVOKE ALL` + checked wrapper functions instead, verified when Phase 18 was built.
+- **Data Migration & Opening Balance, built and tested (user confirmed via AskUserQuestion)**: `/data-migration` — CSV bulk import for Customers/Suppliers/Locations/Items (`import_customers`/`import_suppliers`/`import_locations`/`import_items`, `master_data.create`-gated) and Opening Stock Balance (`import_opening_balance`, `stock_adjustments.approve`-gated since it writes the ledger directly with no separate request/approve step). Every import is one atomic transaction per file — confirmed by mixing one bad row (unknown `site_code`) into an otherwise-valid locations batch: zero rows landed, including the valid ones ahead of it. Confirmed items correctly resolve `customer_code`/`supplier_code` to real FKs. Confirmed opening balance auto-generates a lot number via the same `generate_document_number()` counter as everywhere else, writes a real `OPENING_BALANCE` ledger entry (new, distinct `txn_type` from Phase 23's `ADJUSTMENT` — different kind of event, kept separate for a clean audit trail) + `stock_balance`. Confirmed the approver-level permission gate rejects a role without it.
+- **A side effect, same shape as Phase 23**: the Opening Balance import test wrote one real, permanent `stock_transactions` row, so its whole FK chain (`RPT24TEST-ITEM1`/`LOT-2026-00001`/`RPT24TEST-LOC1`/`RPT24TEST-SITE`/`RPT24TEST-CUST1`/`RPT24TEST-SUP1`) can't be removed either — same append-only guarantee, same reasoning. Everything else from this phase's testing that wasn't locked by that chain was deleted and confirmed gone.
+- **PITR + Monitoring/Alerting: NOT done** — neither is settable via SQL/CLI, both are Supabase Dashboard + billing decisions. Exact steps written in `PRODUCTION_RELEASE.md` §2 for the user to run.
+- **Rollback plan, Cutover plan (incl. the spec's required Parallel Run), Training plan**: written in `PRODUCTION_RELEASE.md` §4-6 — process/documentation, not code, since actual go-live timing, actual old-system data, and actual training sessions are the user's to run, not something to fabricate as "done."
+- Build + typecheck + lint pass, dev server starts clean, no runtime errors on `/data-migration` (pre-auth redirect). **UI not yet verified in browser with a real session** — same standing caveat as every phase.
+
+This is the last of the 25 phases (0-24). See `PRODUCTION_RELEASE.md`'s "Known gaps carried into production" for what's still open going into go-live.
+
 ## Key files
 
 - `supabase/migrations/0001_document_numbering.sql` — document numbering
@@ -384,6 +398,9 @@ Done:
 - `supabase/migrations/0029_stock_adjustments.sql`, `0030_stock_adjustment_picker.sql`, `0031_fix_approve_stock_adjustment.sql` — Adjustment Transaction (request/approve/reject)
 - `src/types/stock-adjustments.ts`, `src/app/(app)/stock-adjustments/` — Stock Adjustments page
 - `TEST_PLAN.md` — Phase 23 UAT plan and results
+- `supabase/migrations/0032_production_release.sql` — audit_rls_coverage(), OPENING_BALANCE txn_type, import_customers()/import_suppliers()/import_locations()/import_items()/import_opening_balance()
+- `src/types/data-migration.ts`, `src/app/(app)/data-migration/` — Data Migration page (Master Data + Opening Balance import, RLS audit)
+- `PRODUCTION_RELEASE.md` — Phase 24 release plan (RLS audit results, PITR/monitoring checklist, rollback/cutover/training)
 - `src/proxy.ts` — auth-gate for all routes except `/login` (Next.js 16 middleware replacement)
 - `src/app/(app)/layout.tsx` — authenticated shell (Sidebar/Header), redirects to `/login` if no session
 - `src/app/login/page.tsx` — sign-in
