@@ -1,0 +1,33 @@
+-- Phase 24 (follow-up, correction): 0033 revoked `authenticated`'s
+-- direct EXECUTE on has_permission(), requesting_role(), and
+-- generate_document_number() on the assumption that a SECURITY
+-- DEFINER function (e.g. create_purchase_order(), owned by postgres)
+-- calling them internally would run those nested calls under the
+-- definer's elevated identity, regardless of the nested function's
+-- own SECURITY INVOKER/DEFINER status. Tested directly against this
+-- project and that assumption was WRONG here: calling
+-- create_purchase_order() as `authenticated` failed with
+-- "permission denied for function has_permission" until authenticated
+-- was explicitly re-granted execute on it (and then on
+-- requesting_role(), which has_permission() itself calls) — restored
+-- and confirmed working with a real create_purchase_order() call.
+--
+-- These three are genuinely different from the other functions 0033
+-- revoked from authenticated (audit_trigger_fn, handle_new_auth_user,
+-- rls_auto_enable, enforce_fg_stock_origin,
+-- prevent_stock_transactions_mutation, set_updated_at): those six are
+-- ONLY ever invoked by Postgres's trigger/event-trigger machinery,
+-- never by a plain SQL function call from within another function's
+-- body — trigger invocation doesn't go through the same EXECUTE-grant
+-- check at all, so revoking them stays correct and safe. has_permission/
+-- requesting_role/generate_document_number, by contrast, are called via
+-- ordinary nested SQL calls from inside nearly every write-path
+-- function in this app, so they need to stay callable by `authenticated`
+-- for the app to function — the Security Advisor's
+-- authenticated_security_definer_function_executable warning on these
+-- (they are not SECURITY DEFINER, so this doesn't even apply to them,
+-- but tracking the reasoning here regardless) is an accepted,
+-- necessary state, not a residual gap.
+grant execute on function has_permission(text, text) to authenticated;
+grant execute on function requesting_role() to authenticated;
+grant execute on function generate_document_number(text) to authenticated;

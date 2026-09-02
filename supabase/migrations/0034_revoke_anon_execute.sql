@@ -1,0 +1,14 @@
+-- Phase 24 (follow-up, cont.): 0033 revoked the PUBLIC default-execute
+-- grant but the Security Advisor still flagged nearly every function
+-- as anon-callable afterward — re-checking pg_proc.proacl showed why:
+-- Supabase's project bootstrap grants `anon` its own SEPARATE explicit
+-- EXECUTE privilege on every new function (`ALTER DEFAULT PRIVILEGES
+-- ... GRANT EXECUTE ON FUNCTIONS TO anon, authenticated, service_role`),
+-- independent of PUBLIC. Revoking PUBLIC alone never touched it.
+--
+-- Nothing in this app is meant to be reachable without signing in —
+-- confirmed no client code or Edge Function relies on anon-level
+-- access to any custom function — so this revokes anon from
+-- everything in `public` in one statement, the same blanket approach
+-- 0033 used for PUBLIC.
+revoke execute on all functions in schema public from anon;
