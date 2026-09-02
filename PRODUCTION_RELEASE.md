@@ -15,21 +15,20 @@ These are pure internal atomic counters with no per-row user-facing meaning — 
 
 **Not covered by this audit, covered separately:** Phase 18's 4 materialized views (`mv_management_dashboard` etc.) can't have RLS at all (a Postgres limitation on materialized views) — they're protected by `REVOKE ALL` from `anon`/`authenticated`/`public` instead, exposed only through checked `SECURITY DEFINER` wrapper functions. Verified when Phase 18 was built (`has_table_privilege()` confirmed `false` for `authenticated`); not re-verified in this pass.
 
-## 2. Point-in-Time Recovery + Monitoring/Alerting — NOT done, needs the user
+## 2. Point-in-Time Recovery + Monitoring/Alerting
 
-Neither is settable through SQL, the CLI, or anything scriptable from here — both are dashboard/billing actions:
+Checked directly in the Supabase Dashboard (logged in as the user, this session) rather than guessed at. Neither PITR nor a plan change is settable through SQL/CLI — both are dashboard/billing actions only the user can authorize.
 
-**PITR:**
-1. Supabase Dashboard → this project → Settings → Add-ons → confirm the plan supports PITR (Pro tier or above; PITR itself is a paid add-on with its own retention-based cost).
-2. Settings → Database → Backups → enable Point-in-Time Recovery, pick a retention window.
-3. Note the earliest recoverable timestamp once it's live — recovery isn't retroactive to before PITR was turned on.
+**Confirmed current state:**
+- Organization `wutthichai.aquip@gmail.com's Org` is on the **Free Plan** ($0/month).
+- **Free-plan risk relevant to production**: free projects auto-pause after 1 week of inactivity. A production system that goes quiet (e.g., a slow week) risks getting paused. This should be tracked as a real risk regardless of the PITR decision below.
+- **PITR**: Settings → Add-ons → Point in Time Recovery. Confirmed disabled, and confirmed it requires the **Pro Plan** (from $25/month + usage-based overages) before it can even be turned on. On top of Pro, the PITR add-on itself costs **$100/month (7-day retention)**, **$200/month (14-day)**, or **$400/month (28-day)** — billed at end of cycle, no immediate charge just from viewing the option.
+- **Decision (2026-09-02, this session)**: user chose **not to upgrade yet** — cost decision deferred. PITR and the Pro-only compute/scaling options remain off. Revisit before real go-live, since §5's Cutover plan assumes PITR is live before step 6.
+- **Monitoring — mostly already available for free**: Reports/Observability (`/dashboard/project/mmkprjuiiwzttalmuips/reports`) shows live Slow Queries, Peak Connections, Disk Usage/IO, Memory, CPU, and per-service health (API Gateway/Database/PostgREST/Auth/Edge Functions/Storage/Realtime) — no plan upgrade needed, nothing further to configure to get baseline visibility.
+- **Proactive alerting (email/webhook on threshold breach)**: no self-service configuration page was found in this dashboard pass. The available paid option is **Log Drains** (Settings → Add-ons) at **+$60/drain/month**, also Pro-plan-only, to forward logs to an external monitoring tool (Datadog etc.) — not evaluated further since PITR/Pro was deferred.
+- Consider an external uptime check against the deployed Next.js app itself regardless of plan — Supabase's monitoring only covers its own services, not the app.
 
-**Monitoring/Alerting:**
-1. Dashboard → Reports/Logs → review the built-in Postgres/API/Auth dashboards.
-2. Dashboard → Settings → Alerts (or the org-level alerting settings) → configure thresholds for at least: database CPU/disk, connection count, failed auth rate, Edge Function error rate (relevant now that `send-notifications` and `process-report-jobs` exist).
-3. Consider an external uptime check against the deployed Next.js app itself (Supabase's monitoring only covers its own services, not the app).
-
-This needs the user's own dashboard access and billing decision — flagged rather than guessed at, same as Phase 20's email/LINE credentials.
+**Unplanned but relevant finding from this pass**: Supabase's built-in Security Advisor (Dashboard → Advisors → Security, free on any plan) reports **109 warnings, 0 errors, 4 info suggestions** for this project. Not part of §1's table-RLS audit (which only checks tables, not function grants) — this is a different, real gap. Two categories seen: (a) **Function Search Path Mutable** — several functions predating the `set search_path = public` convention (`generate_document_number`, `set_updated_at`, `requesting_role`, `has_permission`, `get_sample_size_plan`, `enforce_fg_stock_origin`, `prevent_stock_transactions_mutation`) don't pin it, a real search-path-hijack surface; (b) **Public Can Execute SECURITY DEFINER Function** — functions like `allocate_stock`, `audit_trigger_fn`, `cancel_sales_order`, `cancel_wip_request` (and evidently many more, given the count) appear callable by `PUBLIC` even though they're meant to be `authenticated`-only, meaning an explicit `REVOKE ... FROM PUBLIC` was likely missing on these (an earlier-phase gap in the same "revoke public/anon, grant authenticated" pattern later phases followed consistently). **Not fixed in this session** — flagged for a follow-up pass since it's a genuinely separate piece of work from PITR/monitoring.
 
 ## 3. Data Migration & Opening Balance — done, tested against real data
 
