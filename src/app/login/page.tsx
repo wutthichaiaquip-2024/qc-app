@@ -3,6 +3,9 @@
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Input } from "@/components/ui/Input";
 
 function LoginForm() {
   const router = useRouter();
@@ -74,105 +77,96 @@ function LoginForm() {
     router.refresh();
   }
 
+  const logo = (
+    <div className="flex items-center gap-2.5 mb-1">
+      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand text-brand-foreground text-sm font-bold">
+        AQ
+      </span>
+      <span className="text-base font-semibold tracking-tight text-foreground">AQUIP QC &amp; Inventory</span>
+    </div>
+  );
+
   if (recoveryMode) {
     return (
       <div className="min-h-full flex items-center justify-center p-6">
-        <form
-          onSubmit={handleUpdatePassword}
-          className="w-full max-w-sm flex flex-col gap-4 rounded-lg border border-black/10 dark:border-white/10 p-6"
-        >
-          <h1 className="text-lg font-semibold">ตั้งรหัสผ่านใหม่</h1>
+        <Card className="w-full max-w-sm p-7">
+          <form onSubmit={handleUpdatePassword} className="flex flex-col gap-4">
+            {logo}
+            <p className="text-sm text-foreground-muted -mt-2">ตั้งรหัสผ่านใหม่สำหรับบัญชีของคุณ</p>
 
-          <div className="flex flex-col gap-1">
-            <label htmlFor="new-password" className="text-sm">
-              รหัสผ่านใหม่
-            </label>
-            <input
-              id="new-password"
-              type="password"
-              required
-              minLength={6}
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-3 py-1.5 text-sm"
-            />
-          </div>
+            <div className="flex flex-col gap-1">
+              <label htmlFor="new-password" className="text-sm font-medium text-foreground">
+                รหัสผ่านใหม่
+              </label>
+              <Input
+                id="new-password"
+                type="password"
+                required
+                minLength={6}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
+            </div>
 
-          <div className="flex flex-col gap-1">
-            <label htmlFor="confirm-password" className="text-sm">
-              ยืนยันรหัสผ่านใหม่
-            </label>
-            <input
-              id="confirm-password"
-              type="password"
-              required
-              minLength={6}
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-3 py-1.5 text-sm"
-            />
-          </div>
+            <div className="flex flex-col gap-1">
+              <label htmlFor="confirm-password" className="text-sm font-medium text-foreground">
+                ยืนยันรหัสผ่านใหม่
+              </label>
+              <Input
+                id="confirm-password"
+                type="password"
+                required
+                minLength={6}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
+            </div>
 
-          {updateError && <p className="text-sm text-red-600">{updateError}</p>}
+            {updateError && <p className="text-sm text-danger">{updateError}</p>}
 
-          <button
-            type="submit"
-            disabled={updateLoading}
-            className="rounded-md bg-black text-white dark:bg-white dark:text-black px-3 py-1.5 text-sm font-medium disabled:opacity-50"
-          >
-            {updateLoading ? "กำลังบันทึก..." : "บันทึกรหัสผ่านใหม่"}
-          </button>
-        </form>
+            <Button type="submit" disabled={updateLoading} className="mt-1 w-full">
+              {updateLoading ? "กำลังบันทึก..." : "บันทึกรหัสผ่านใหม่"}
+            </Button>
+          </form>
+        </Card>
       </div>
     );
   }
 
   return (
     <div className="min-h-full flex items-center justify-center p-6">
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-sm flex flex-col gap-4 rounded-lg border border-black/10 dark:border-white/10 p-6"
-      >
-        <h1 className="text-lg font-semibold">AQUIP QC & Inventory</h1>
+      <Card className="w-full max-w-sm p-7">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          {logo}
+          <p className="text-sm text-foreground-muted -mt-2">เข้าสู่ระบบเพื่อใช้งาน</p>
 
-        <div className="flex flex-col gap-1">
-          <label htmlFor="email" className="text-sm">
-            อีเมล
-          </label>
-          <input
-            id="email"
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-3 py-1.5 text-sm"
-          />
-        </div>
+          <div className="flex flex-col gap-1">
+            <label htmlFor="email" className="text-sm font-medium text-foreground">
+              อีเมล
+            </label>
+            <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+          </div>
 
-        <div className="flex flex-col gap-1">
-          <label htmlFor="password" className="text-sm">
-            รหัสผ่าน
-          </label>
-          <input
-            id="password"
-            type="password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="rounded-md border border-black/15 dark:border-white/15 bg-transparent px-3 py-1.5 text-sm"
-          />
-        </div>
+          <div className="flex flex-col gap-1">
+            <label htmlFor="password" className="text-sm font-medium text-foreground">
+              รหัสผ่าน
+            </label>
+            <Input
+              id="password"
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-danger">{error}</p>}
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="rounded-md bg-black text-white dark:bg-white dark:text-black px-3 py-1.5 text-sm font-medium disabled:opacity-50"
-        >
-          {loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
-        </button>
-      </form>
+          <Button type="submit" disabled={loading} className="mt-1 w-full">
+            {loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
+          </Button>
+        </form>
+      </Card>
     </div>
   );
 }
